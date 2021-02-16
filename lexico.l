@@ -4,10 +4,10 @@
 %option nounput
 
 %{
-#include <studio.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
-
+#include "parser.h"
 int linea = 1;
 %}
 
@@ -32,9 +32,9 @@ id ([a-zA-Z])([a-zA-Z]|0-9|"_")*
 "u" {yylval.STRING = strdup(yytext);return (u);};
 "path" {yylval.STRING = strdup(yytext);return (path);};
 "rmdisk" {yylval.STRING = strdup(yytext);return (rmdisk);};
-"fdisk" {yylval.STRING = strdup(yytext);return (fdsik);};
+"fdisk" {yylval.STRING = strdup(yytext);return (fdisk);};
 "type" {yylval.STRING = strdup(yytext);return (type);};
-"delete" {yylval.STRING = strdup(yytext);return (delete);};
+"delete" {yylval.STRING = strdup(yytext);return (delete_);};
 "name" {yylval.STRING = strdup(yytext);return (name);};
 "add" {yylval.STRING = strdup(yytext);return (add);};
 "mount" {yylval.STRING = strdup(yytext);return (mount);};

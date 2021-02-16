@@ -4,13 +4,8 @@
 #include <math.h>
 #include <iostream>
 #include <string.h>
-#include "scanner.h"
-using namespace std;
-extern int yylex(void);
-extern char *yytext;
-extern FILE *yyin;
-extern void yyerror(const char *s);
-extern int linea;
+#include <scanner.h>
+
 %}
 
 %start INIT
@@ -27,7 +22,7 @@ extern int linea;
 %token<STRING> rmdisk
 %token<STRING> fdisk
 %token<STRING> type
-%token<STRING> delete_
+%token<STRING> delete
 %token<STRING> name
 %token<STRING> add
 %token<STRING> mount
@@ -48,11 +43,9 @@ extern int linea;
 %token<STRING> ruta
 
 %type<STRING> INIT
-%type<STRING> INSTRUCCION
 %type<STRING> INSTRUCCIONES
-%type<STRING> MKPARAM
 
-%define parse.error verbose
+%error-verbose
 %locations
 
 %union{
@@ -66,27 +59,8 @@ INIT:
 ;
 
 INSTRUCCIONES:
-    INSTRUCCIONES INSTRUCCION
-    | INSTRUCCION
+    mkdisk {echo "mkdisk";}
 ;
-
-INSTRUCCION:
-    mkdisk MKDISKP {cout << "mkdisk";}
-    | error {std::cout << "error";}
-;
-
-MKDISKP:
-    MKDISKP MKPARAM
-    | MKPARAM
-;
-
-MKPARAM :
-        guion size {cout << "size";}
-    |   guion f {cout << "f";}
-    |   guion u {cout << "u";}
-    |   guion path {std::cout << "path";}
-;
-
 %%
 void yyerror(const char *s)
 {
