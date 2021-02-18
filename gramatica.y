@@ -4,13 +4,18 @@
 #include <math.h>
 #include <iostream>
 #include <string.h>
+
 #include "scanner.h"
+#include "mkdisk.h"
+
 using namespace std;
 extern int yylex(void);
 extern char *yytext;
 extern FILE *yyin;
 extern void yyerror(const char *s);
 extern int linea;
+
+_MKDISK * mkdiskV;
 %}
 
 %start INIT
@@ -19,6 +24,7 @@ extern int linea;
 %token<NUM> negativo
 %token<STRING> cadena
 %token<STRING> guion
+%token<STRING> igual
 %token<STRING> mkdisk
 %token<STRING> size
 %token<STRING> f
@@ -46,11 +52,15 @@ extern int linea;
 %token<STRING> chmod
 %token<STRING> ugo
 %token<STRING> ruta
-
+%token<STRING> BF
+%token<STRING> FF
+%token<STRING> WF
+%token<STRING> k
+%token<STRING> m
 %type<STRING> INIT
 %type<STRING> INSTRUCCION
 %type<STRING> INSTRUCCIONES
-%type<STRING> MKPARAM
+%type<STRING> MKDISKPARAM
 
 %define parse.error verbose
 %locations
@@ -71,20 +81,24 @@ INSTRUCCIONES:
 ;
 
 INSTRUCCION:
-    mkdisk MKDISKP {cout << "mkdisk";}
+    mkdisk {mkdiskV = new _MKDISK();} MKDISKP {mkdiskV->exe();/*realiza la creación del disco*/}
     | error {std::cout << "error";}
 ;
 
 MKDISKP:
-    MKDISKP MKPARAM
-    | MKPARAM
+    MKDISKP MKDISKPARAM
+    | MKDISKPARAM
 ;
 
-MKPARAM :
-        guion size {cout << "size";}
-    |   guion f {cout << "f";}
-    |   guion u {cout << "u";}
-    |   guion path {std::cout << "path";}
+MKDISKPARAM :
+        guion size igual numero {mkdiskV->setSize(atoi($4)); cout <<"size is "<<mkdiskV->getSize()<<endl;}
+    |   guion f igual BF {mkdiskV->setFit($4); cout <<"Fit is "<<mkdiskV->getFit()<<endl;}
+    |   guion f igual FF {mkdiskV->setFit($4); cout <<"Fit is "<<mkdiskV->getFit()<<endl;}
+    |   guion f igual WF {mkdiskV->setFit($4); cout <<"Fit is "<<mkdiskV->getFit()<<endl;}
+    |   guion u igual k {mkdiskV->setUnit($4); cout <<"Unit is "<<mkdiskV->getUnit()<<endl;}
+    |   guion u igual m {mkdiskV->setUnit($4); cout <<"Unit is "<<mkdiskV->getUnit()<<endl;}
+    |   guion path igual ruta {mkdiskV->setPath($4); cout <<"Path is "<<mkdiskV->getPath()<<endl;}
+    |   guion path igual cadena {mkdiskV->setPath($4); cout <<"Path is "<<mkdiskV->getPath()<<endl;}
 ;
 
 %%

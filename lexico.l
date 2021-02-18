@@ -15,8 +15,8 @@ comentario [#]([^\n])*
 numero [0-9]+
 negativo [-][0-9]+
 cadena \"(\\\"|\\n|\\t|\\r|\\\\|[^\"])*\" 
-ruta ([a-zA-Z])([a-zA-Z]|0-9|"_")*(\/([a-zA-Z])([a-zA-Z]|0-9|"_")*)*
-id ([a-zA-Z])([a-zA-Z]|0-9|"_")*
+ruta (([/]([a-zA-Z]|[0-9]|"_")+)+)(".")(d)(k)
+id ([a-zA-Z])([a-zA-Z][|0-9]|"_")*
 
 %%
 ('\s'|'\r'|'\t')+ {};
@@ -25,7 +25,8 @@ id ([a-zA-Z])([a-zA-Z]|0-9|"_")*
 {numero} {yylval.STRING = strdup(yytext);return (numero);};
 {negativo} {yylval.STRING = strdup(yytext);return (negativo);};
 {cadena} {yylval.STRING = strdup(yytext); return (cadena);};
-[-] {yylval.STRING = strdup(yytext);return (guion);};
+("–"|"-") {yylval.STRING = strdup(yytext);return (guion);};
+[=] {yylval.STRING = strdup(yytext);return (igual);};
 "mkdisk" {yylval.STRING = strdup(yytext);return (mkdisk);};
 "size" {yylval.STRING = strdup(yytext);return (size);};
 "f" {yylval.STRING = strdup(yytext);return (f);};
@@ -52,6 +53,11 @@ id ([a-zA-Z])([a-zA-Z]|0-9|"_")*
 "rmusr" {yylval.STRING = strdup(yytext);return (rmusr);};
 "chmod" {yylval.STRING = strdup(yytext);return (chmod);};
 "ugo" {yylval.STRING = strdup(yytext);return (ugo);};
+"BF" {yylval.STRING = strdup(yytext);return (BF);};
+"FF" {yylval.STRING = strdup(yytext);return (FF);};
+"WF" {yylval.STRING = strdup(yytext);return (WF);};
+"k" {yylval.STRING = strdup(yytext);return (k);};
+"m" {yylval.STRING = strdup(yytext);return (m);};
 {id} {yylval.STRING = strdup(yytext); return (id);};
 {ruta} {yylval.STRING = strdup(yytext); return (ruta);};
 . {}
