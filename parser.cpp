@@ -76,6 +76,7 @@
 
 #include "scanner.h"
 #include "mkdisk.h"
+#include "rmdisk.h"
 
 using namespace std;
 extern int yylex(void);
@@ -85,8 +86,9 @@ extern void yyerror(const char *s);
 extern int linea;
 
 _MKDISK * mkdiskV;
+_RMDISK * rmdiskV;
 
-#line 90 "parser.cpp"
+#line 92 "parser.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -173,12 +175,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 63 "gramatica.y"
+#line 69 "gramatica.y"
 
     char*STRING;
     char*NUM;
 
-#line 182 "parser.cpp"
+#line 184 "parser.cpp"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -512,18 +514,18 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  7
+#define YYFINAL  9
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   29
+#define YYLAST   31
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  35
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  7
+#define YYNNTS  10
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  14
+#define YYNRULES  20
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  26
+#define YYNSTATES  36
 
 #define YYUNDEFTOK  2
 #define YYMAXUTOK   289
@@ -573,8 +575,9 @@ static const yytype_int8 yytranslate[] =
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int8 yyrline[] =
 {
-       0,    70,    70,    74,    75,    79,    79,    80,    84,    85,
-      89,    90,    91,    92,    93
+       0,    76,    76,    80,    81,    85,    85,    86,    86,    87,
+      91,    92,    96,    97,    98,    99,   100,   104,   105,   109,
+     110
 };
 #endif
 
@@ -588,7 +591,8 @@ static const char *const yytname[] =
   "delete_", "name", "add", "mount", "unmount", "mkfs", "id", "fs",
   "usuario", "password", "login", "logout", "mkgrp", "rmgrp", "mkusr",
   "rmusr", "chmod", "ugo", "ruta", "$accept", "INIT", "INSTRUCCIONES",
-  "INSTRUCCION", "$@1", "MKDISKP", "MKDISKPARAM", YY_NULLPTR
+  "INSTRUCCION", "$@1", "$@2", "MKDISKP", "MKDISKPARAM", "RMDISKP",
+  "RMDISKPARAM", YY_NULLPTR
 };
 #endif
 
@@ -604,7 +608,7 @@ static const yytype_int16 yytoknum[] =
 };
 # endif
 
-#define YYPACT_NINF (-11)
+#define YYPACT_NINF (-9)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -618,9 +622,10 @@ static const yytype_int16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-       2,   -11,   -11,     4,     1,   -11,     5,   -11,   -11,    -4,
-       5,   -11,     6,     7,     8,     9,   -11,    14,   -10,    -3,
-      -5,   -11,   -11,   -11,   -11,   -11
+       3,    -9,    -9,    -9,     5,     2,    -9,     6,     7,    -9,
+      -9,    -3,     6,    -9,     8,     7,    -9,    10,    11,    12,
+      14,    -9,    15,    -9,    20,    -8,     4,    -5,    -4,    -9,
+      -9,    -9,    -9,    -9,    -9,    -9
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -628,21 +633,22 @@ static const yytype_int8 yypact[] =
      means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       0,     7,     5,     0,     0,     4,     0,     1,     3,     0,
-       6,     9,     0,     0,     0,     0,     8,     0,     0,     0,
-       0,    10,    11,    12,    14,    13
+       0,     9,     5,     7,     0,     0,     4,     0,     0,     1,
+       3,     0,     6,    11,     0,     8,    18,     0,     0,     0,
+       0,    10,     0,    17,     0,     0,     0,     0,     0,    12,
+      13,    14,    16,    15,    20,    19
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -11,   -11,   -11,    16,   -11,   -11,    11
+      -9,    -9,    -9,    19,    -9,    -9,    -9,    13,    -9,    16
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     3,     4,     5,     6,    10,    11
+      -1,     4,     5,     6,     7,     8,    12,    13,    15,    16
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -650,39 +656,44 @@ static const yytype_int8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      24,    -2,     1,     1,     7,    12,    13,    14,    15,     2,
-       2,     9,    22,    17,    18,    19,    20,    21,     0,    23,
-       8,    16,     0,     0,     0,     0,     0,     0,     0,    25
+      32,    34,    -2,     1,     1,     9,    17,    18,    19,    20,
+       2,     2,    11,    14,    30,     3,     3,    24,    25,    26,
+      22,    27,    28,    29,    10,    21,    31,     0,     0,    33,
+      35,    23
 };
 
 static const yytype_int8 yycheck[] =
 {
-       5,     0,     1,     1,     0,     9,    10,    11,    12,     8,
-       8,     6,    22,     7,     7,     7,     7,     3,    -1,    22,
-       4,    10,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    34
+       5,     5,     0,     1,     1,     0,     9,    10,    11,    12,
+       8,     8,     6,     6,    22,    13,    13,     7,     7,     7,
+      12,     7,     7,     3,     5,    12,    22,    -1,    -1,    34,
+      34,    15
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,     1,     8,    36,    37,    38,    39,     0,    38,     6,
-      40,    41,     9,    10,    11,    12,    41,     7,     7,     7,
-       7,     3,    22,    22,     5,    34
+       0,     1,     8,    13,    36,    37,    38,    39,    40,     0,
+      38,     6,    41,    42,     6,    43,    44,     9,    10,    11,
+      12,    42,    12,    44,     7,     7,     7,     7,     7,     3,
+      22,    22,     5,    34,     5,    34
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    35,    36,    37,    37,    39,    38,    38,    40,    40,
-      41,    41,    41,    41,    41
+       0,    35,    36,    37,    37,    39,    38,    40,    38,    38,
+      41,    41,    42,    42,    42,    42,    42,    43,    43,    44,
+      44
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     1,     2,     1,     0,     3,     1,     2,     1,
-       4,     4,     4,     4,     4
+       0,     2,     1,     2,     1,     0,     3,     0,     3,     1,
+       2,     1,     4,     4,     4,     4,     4,     2,     1,     4,
+       4
 };
 
 
@@ -1473,55 +1484,79 @@ yyreduce:
   switch (yyn)
     {
   case 5:
-#line 79 "gramatica.y"
+#line 85 "gramatica.y"
            {mkdiskV = new _MKDISK();}
-#line 1479 "parser.cpp"
+#line 1490 "parser.cpp"
     break;
 
   case 6:
-#line 79 "gramatica.y"
+#line 85 "gramatica.y"
                                               {mkdiskV->exe();/*realiza la creación del disco*/}
-#line 1485 "parser.cpp"
+#line 1496 "parser.cpp"
     break;
 
   case 7:
-#line 80 "gramatica.y"
+#line 86 "gramatica.y"
+             {rmdiskV = new _RMDISK();}
+#line 1502 "parser.cpp"
+    break;
+
+  case 8:
+#line 86 "gramatica.y"
+                                                {rmdiskV->exe();/*realiza la eliminación del disco*/}
+#line 1508 "parser.cpp"
+    break;
+
+  case 9:
+#line 87 "gramatica.y"
             {std::cout << "error";}
-#line 1491 "parser.cpp"
-    break;
-
-  case 10:
-#line 89 "gramatica.y"
-                                {mkdiskV->setSize(atoi((yyvsp[0].NUM))); cout <<"size is "<<mkdiskV->getSize()<<endl;}
-#line 1497 "parser.cpp"
-    break;
-
-  case 11:
-#line 90 "gramatica.y"
-                         {mkdiskV->setFit((yyvsp[0].STRING)); cout <<"Fit is "<<mkdiskV->getFit()<<endl;}
-#line 1503 "parser.cpp"
+#line 1514 "parser.cpp"
     break;
 
   case 12:
-#line 91 "gramatica.y"
-                         {mkdiskV->setUnit((yyvsp[0].STRING)); cout <<"Unit is "<<mkdiskV->getUnit()<<endl;}
-#line 1509 "parser.cpp"
+#line 96 "gramatica.y"
+                                {mkdiskV->setSize(atoi((yyvsp[0].NUM)));}
+#line 1520 "parser.cpp"
     break;
 
   case 13:
-#line 92 "gramatica.y"
-                              {mkdiskV->setPath((yyvsp[0].STRING)); cout <<"Path is "<<mkdiskV->getPath()<<endl;}
-#line 1515 "parser.cpp"
+#line 97 "gramatica.y"
+                         {mkdiskV->setFit((yyvsp[0].STRING));}
+#line 1526 "parser.cpp"
     break;
 
   case 14:
-#line 93 "gramatica.y"
-                                {mkdiskV->setPath((yyvsp[0].STRING)); cout <<"Path is "<<mkdiskV->getPath()<<endl;}
-#line 1521 "parser.cpp"
+#line 98 "gramatica.y"
+                         {mkdiskV->setUnit((yyvsp[0].STRING));}
+#line 1532 "parser.cpp"
+    break;
+
+  case 15:
+#line 99 "gramatica.y"
+                              {mkdiskV->setPath((yyvsp[0].STRING), false);}
+#line 1538 "parser.cpp"
+    break;
+
+  case 16:
+#line 100 "gramatica.y"
+                                {mkdiskV->setPath((yyvsp[0].STRING), true);}
+#line 1544 "parser.cpp"
+    break;
+
+  case 19:
+#line 109 "gramatica.y"
+                              {rmdiskV->setPath((yyvsp[0].STRING), false);}
+#line 1550 "parser.cpp"
+    break;
+
+  case 20:
+#line 110 "gramatica.y"
+                                {rmdiskV->setPath((yyvsp[0].STRING), true);}
+#line 1556 "parser.cpp"
     break;
 
 
-#line 1525 "parser.cpp"
+#line 1560 "parser.cpp"
 
       default: break;
     }
@@ -1759,7 +1794,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 96 "gramatica.y"
+#line 112 "gramatica.y"
 
 void yyerror(const char *s)
 {

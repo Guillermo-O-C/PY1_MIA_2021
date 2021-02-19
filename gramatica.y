@@ -7,6 +7,7 @@
 
 #include "scanner.h"
 #include "mkdisk.h"
+#include "rmdisk.h"
 
 using namespace std;
 extern int yylex(void);
@@ -16,6 +17,7 @@ extern void yyerror(const char *s);
 extern int linea;
 
 _MKDISK * mkdiskV;
+_RMDISK * rmdiskV;
 %}
 
 %start INIT
@@ -52,10 +54,14 @@ _MKDISK * mkdiskV;
 %token<STRING> chmod
 %token<STRING> ugo
 %token<STRING> ruta
+
 %type<STRING> INIT
 %type<STRING> INSTRUCCION
 %type<STRING> INSTRUCCIONES
+%type<STRING> MKDISKP
 %type<STRING> MKDISKPARAM
+%type<STRING> RMDISKP
+%type<STRING> RMDISKPARAM
 
 %define parse.error verbose
 %locations
@@ -77,6 +83,7 @@ INSTRUCCIONES:
 
 INSTRUCCION:
     mkdisk {mkdiskV = new _MKDISK();} MKDISKP {mkdiskV->exe();/*realiza la creación del disco*/}
+    | rmdisk {rmdiskV = new _RMDISK();} RMDISKP {rmdiskV->exe();/*realiza la eliminación del disco*/}
     | error {std::cout << "error";}
 ;
 
@@ -86,13 +93,22 @@ MKDISKP:
 ;
 
 MKDISKPARAM :
-        guion size igual numero {mkdiskV->setSize(atoi($4)); cout <<"size is "<<mkdiskV->getSize()<<endl;}
-    |   guion f igual id {mkdiskV->setFit($4); cout <<"Fit is "<<mkdiskV->getFit()<<endl;}
-    |   guion u igual id {mkdiskV->setUnit($4); cout <<"Unit is "<<mkdiskV->getUnit()<<endl;}
-    |   guion path igual ruta {mkdiskV->setPath($4); cout <<"Path is "<<mkdiskV->getPath()<<endl;}
-    |   guion path igual cadena {mkdiskV->setPath($4); cout <<"Path is "<<mkdiskV->getPath()<<endl;}
+        guion size igual numero {mkdiskV->setSize(atoi($4));}
+    |   guion f igual id {mkdiskV->setFit($4);}
+    |   guion u igual id {mkdiskV->setUnit($4);}
+    |   guion path igual ruta {mkdiskV->setPath($4, false);}
+    |   guion path igual cadena {mkdiskV->setPath($4, true);}
 ;
 
+RMDISKP:
+    RMDISKP RMDISKPARAM
+    | RMDISKPARAM
+;
+
+RMDISKPARAM :
+        guion path igual ruta {rmdiskV->setPath($4, false);}
+    |   guion path igual cadena {rmdiskV->setPath($4, true);}
+;
 %%
 void yyerror(const char *s)
 {

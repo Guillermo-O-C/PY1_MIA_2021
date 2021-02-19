@@ -1,4 +1,5 @@
 #include <iostream>
+#include <stdio.h>
 using namespace std;
 
 class _MKDISK{
@@ -10,10 +11,11 @@ class _MKDISK{
     public:
         _MKDISK(){
             this->f = "bf";
+            this->u = "k";
         };
         void setSize(int size);
         void setFit(string f);
-        void setPath(string path);
+        void setPath(string path, bool isCadena);
         void setUnit(string u);
         int getSize();
         string getFit();
@@ -28,8 +30,12 @@ void _MKDISK::setSize(int size){
 void _MKDISK::setFit(string f){
     this->f = toLowerCase(f);
 };
-void _MKDISK::setPath(string path){
-    this->path = toLowerCase(path);
+void _MKDISK::setPath(string path, bool isCadena){
+    if(isCadena){
+        this->path = path.substr(1, path.length()-2);
+    }else{
+        this->path = path;
+    }
 };
 void _MKDISK::setUnit(string u){
     this->u = toLowerCase(u);
@@ -70,33 +76,14 @@ void _MKDISK::exe(){
             this->size=this->size*1024*1024;
         }
 
-        string filename = "", folders ="";
-        for(int i=this->path.length(); i>=0; i--){
-            if(this->path[i]=='/'){
-                filename = this->path.substr(i+1, this->path.length());
-                folders = this->path.substr(1, i-1);
-                break;
-            }
-        }
-        cout << "creating folders "<<folders<<endl;
-        string command = "mkdir -p \\"+folders;
-        system(command.c_str());
-        command = "sudo chmod -R 777 \'"+folders+"\'";
-        system(command.c_str());      
-/*        return;
-        FILE *exists = fopen(this->path.c_str(),"r");
-        if(exists!=NULL){
+        FILE *existe = fopen(this->path.c_str(),"r");
+        if(existe!=NULL){
             cout << "ERROR: El disco ya existe"<<endl;
-            fclose(exists);
+            fclose(existe);
             return;
-        }else{
-            FILE * createFile;
-            cout <<filename<<endl;
-            createFile = fopen(filename.c_str(), "w");
-            fclose(createFile);
         }
-*/
-        FILE * searchFile =  fopen(this->path.c_str(), "wb");
+        
+        FILE *searchFile =  fopen(this->path.c_str(), "wb+");
         if(searchFile != NULL){
             fwrite("\0", 1, 1, searchFile);
             fseek(searchFile, this->size-1, SEEK_SET);
@@ -104,8 +91,18 @@ void _MKDISK::exe(){
             rewind(searchFile);
             cout<<"Disco Creado con éxito"<<endl;
         }else{
-            cout << "no existe"<<endl;
-            
+            cout << "file not found"<<endl;
+            string command = "mkdir -p \""+this->path+"\"";
+            system(command.c_str());
+            command = "rmdir \'"+this->path+"\'";        
+            system(command.c_str());
+
+            searchFile = fopen(this->path.c_str(), "wb+");
+            fwrite("\0", 1, 1, searchFile);
+            fseek(searchFile, this->size-1, SEEK_SET);
+            fwrite("\0", 1, 1, searchFile);
+            rewind(searchFile);
+            cout<<"Disco Creado con éxito"<<endl;                       
         }
         fclose(searchFile);
     }

@@ -88,7 +88,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 63 "gramatica.y"
+#line 69 "gramatica.y"
 
     char*STRING;
     char*NUM;
