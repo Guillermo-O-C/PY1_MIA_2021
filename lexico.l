@@ -53,11 +53,6 @@ id ([a-zA-Z])([a-zA-Z][|0-9]|"_")*
 "rmusr" {yylval.STRING = strdup(yytext);return (rmusr);};
 "chmod" {yylval.STRING = strdup(yytext);return (chmod);};
 "ugo" {yylval.STRING = strdup(yytext);return (ugo);};
-"BF" {yylval.STRING = strdup(yytext);return (BF);};
-"FF" {yylval.STRING = strdup(yytext);return (FF);};
-"WF" {yylval.STRING = strdup(yytext);return (WF);};
-"k" {yylval.STRING = strdup(yytext);return (k);};
-"m" {yylval.STRING = strdup(yytext);return (m);};
 {id} {yylval.STRING = strdup(yytext); return (id);};
 {ruta} {yylval.STRING = strdup(yytext); return (ruta);};
 . {}

@@ -52,11 +52,6 @@ _MKDISK * mkdiskV;
 %token<STRING> chmod
 %token<STRING> ugo
 %token<STRING> ruta
-%token<STRING> BF
-%token<STRING> FF
-%token<STRING> WF
-%token<STRING> k
-%token<STRING> m
 %type<STRING> INIT
 %type<STRING> INSTRUCCION
 %type<STRING> INSTRUCCIONES
@@ -92,11 +87,8 @@ MKDISKP:
 
 MKDISKPARAM :
         guion size igual numero {mkdiskV->setSize(atoi($4)); cout <<"size is "<<mkdiskV->getSize()<<endl;}
-    |   guion f igual BF {mkdiskV->setFit($4); cout <<"Fit is "<<mkdiskV->getFit()<<endl;}
-    |   guion f igual FF {mkdiskV->setFit($4); cout <<"Fit is "<<mkdiskV->getFit()<<endl;}
-    |   guion f igual WF {mkdiskV->setFit($4); cout <<"Fit is "<<mkdiskV->getFit()<<endl;}
-    |   guion u igual k {mkdiskV->setUnit($4); cout <<"Unit is "<<mkdiskV->getUnit()<<endl;}
-    |   guion u igual m {mkdiskV->setUnit($4); cout <<"Unit is "<<mkdiskV->getUnit()<<endl;}
+    |   guion f igual id {mkdiskV->setFit($4); cout <<"Fit is "<<mkdiskV->getFit()<<endl;}
+    |   guion u igual id {mkdiskV->setUnit($4); cout <<"Unit is "<<mkdiskV->getUnit()<<endl;}
     |   guion path igual ruta {mkdiskV->setPath($4); cout <<"Path is "<<mkdiskV->getPath()<<endl;}
     |   guion path igual cadena {mkdiskV->setPath($4); cout <<"Path is "<<mkdiskV->getPath()<<endl;}
 ;
