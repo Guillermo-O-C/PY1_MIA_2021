@@ -10,8 +10,10 @@ class _MKDISK{
         string u;
     public:
         _MKDISK(){
+            this->size=0;
+            this->path="";
             this->f = "bf";
-            this->u = "k";
+            this->u = "m";
         };
         void setSize(int size);
         void setFit(string f);
@@ -53,13 +55,14 @@ string _MKDISK::getUnit(){
     return this->u;
 };
 void _MKDISK::exe(){
-    cout << "creating disk..."<<endl;
     if(this->size<=0){
-        cout<<"ERROR:no se puede crear un disco con el tamaño " << this->size <<endl;
+        cout<<"ERROR:no se puede crear un disco con el tamaño." << this->size <<endl;
+    }else if(this->path=""){
+        cout<<"ERROR:el parámetro PATH es obligatorio."<<this->u<<endl;
     }else if(this->u!="k" && this->u!="m"){
-        cout<<"ERROR:no existe la unidad de datos "<<this->u<<endl;
+        cout<<"ERROR:no existe la unidad de datos."<<this->u<<endl;
     }else if(this->f!="bf" && this->f!="ff" && this->f!="wf"){
-        cout<<"ERROR:no existe el fit "<<this->f<<endl;
+        cout<<"ERROR:no existe el fit."<<this->f<<endl;
     }else{
         time_t t;
         struct tm *tm;

@@ -29,7 +29,7 @@ void _RMDISK::exe(){
     FILE *existe = fopen(this->path.c_str(),"r");
     if(existe==NULL){
         cout << "ERROR: El disco no existe."<<endl;
-       // fclose(existe);
+        // fclose(existe);
         return;
     }
 

@@ -12,8 +12,7 @@ int linea = 1;
 %}
 
 comentario [#]([^\n])* 
-numero [0-9]+
-negativo [-][0-9]+
+numero [-]?[0-9]+
 cadena \"(\\\"|\\n|\\t|\\r|\\\\|[^\"])*\" 
 ruta (([/]([a-zA-Z]|[0-9]|"_")+)+)(".")(d)(k)
 id ([a-zA-Z])([a-zA-Z][|0-9]|"_")*
@@ -23,7 +22,6 @@ id ([a-zA-Z])([a-zA-Z][|0-9]|"_")*
 "\n" {linea++;};
 {comentario} {};
 {numero} {yylval.STRING = strdup(yytext);return (numero);};
-{negativo} {yylval.STRING = strdup(yytext);return (negativo);};
 {cadena} {yylval.STRING = strdup(yytext); return (cadena);};
 ("–"|"-") {yylval.STRING = strdup(yytext);return (guion);};
 [=] {yylval.STRING = strdup(yytext);return (igual);};

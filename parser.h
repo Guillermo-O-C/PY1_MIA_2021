@@ -50,37 +50,36 @@ extern int yydebug;
   enum yytokentype
   {
     numero = 258,
-    negativo = 259,
-    cadena = 260,
-    guion = 261,
-    igual = 262,
-    mkdisk = 263,
-    size = 264,
-    f = 265,
-    u = 266,
-    path = 267,
-    rmdisk = 268,
-    fdisk = 269,
-    type = 270,
-    delete_ = 271,
-    name = 272,
-    add = 273,
-    mount = 274,
-    unmount = 275,
-    mkfs = 276,
-    id = 277,
-    fs = 278,
-    usuario = 279,
-    password = 280,
-    login = 281,
-    logout = 282,
-    mkgrp = 283,
-    rmgrp = 284,
-    mkusr = 285,
-    rmusr = 286,
-    chmod = 287,
-    ugo = 288,
-    ruta = 289
+    cadena = 259,
+    guion = 260,
+    igual = 261,
+    mkdisk = 262,
+    size = 263,
+    f = 264,
+    u = 265,
+    path = 266,
+    rmdisk = 267,
+    fdisk = 268,
+    type = 269,
+    delete_ = 270,
+    name = 271,
+    add = 272,
+    mount = 273,
+    unmount = 274,
+    mkfs = 275,
+    id = 276,
+    fs = 277,
+    usuario = 278,
+    password = 279,
+    login = 280,
+    logout = 281,
+    mkgrp = 282,
+    rmgrp = 283,
+    mkusr = 284,
+    rmusr = 285,
+    chmod = 286,
+    ugo = 287,
+    ruta = 288
   };
 #endif
 
@@ -88,12 +87,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 69 "gramatica.y"
+#line 72 "gramatica.y"
 
     char*STRING;
     char*NUM;
 
-#line 97 "parser.h"
+#line 96 "parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

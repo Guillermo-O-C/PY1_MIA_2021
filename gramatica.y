@@ -8,6 +8,7 @@
 #include "scanner.h"
 #include "mkdisk.h"
 #include "rmdisk.h"
+#include "fdisk.h"
 
 using namespace std;
 extern int yylex(void);
@@ -18,12 +19,12 @@ extern int linea;
 
 _MKDISK * mkdiskV;
 _RMDISK * rmdiskV;
+_FDISK * fdiskV;
 %}
 
 %start INIT
 
 %token<NUM> numero
-%token<NUM> negativo
 %token<STRING> cadena
 %token<STRING> guion
 %token<STRING> igual
@@ -62,6 +63,8 @@ _RMDISK * rmdiskV;
 %type<STRING> MKDISKPARAM
 %type<STRING> RMDISKP
 %type<STRING> RMDISKPARAM
+%type<STRING> FDISKP
+%type<STRING> FDISKPARAM
 
 %define parse.error verbose
 %locations
@@ -84,6 +87,7 @@ INSTRUCCIONES:
 INSTRUCCION:
     mkdisk {mkdiskV = new _MKDISK();} MKDISKP {mkdiskV->exe();/*realiza la creación del disco*/}
     | rmdisk {rmdiskV = new _RMDISK();} RMDISKP {rmdiskV->exe();/*realiza la eliminación del disco*/}
+    | fdisk {fdiskV = new _FDISK();} FDISKP {fdiskV->exe();/*realiza la eliminación del disco*/}
     | error {std::cout << "error";}
 ;
 
@@ -108,6 +112,23 @@ RMDISKP:
 RMDISKPARAM :
         guion path igual ruta {rmdiskV->setPath($4, false);}
     |   guion path igual cadena {rmdiskV->setPath($4, true);}
+;
+
+FDISKP:
+    FDISKP FDISKPARAM
+    | FDISKPARAM
+;
+
+FDISKPARAM :
+        guion size igual numero {fdiskV->setSize(atoi($4));}
+    |   guion u igual id {fdiskV->setUnit($4);}
+    |   guion type igual id {fdiskV->setType($4);}
+    |   guion f igual id {fdiskV->setFit($4);}
+    |   guion delete_ igual id {fdiskV->setDelete($4);}
+    |   guion name igual id {fdiskV->setName($4);}
+    |   guion add igual numero {fdiskV->setAdd(atoi($4));}
+    |   guion path igual ruta {fdiskV->setPath($4, false);}
+    |   guion path igual cadena {fdiskV->setPath($4, true);}
 ;
 %%
 void yyerror(const char *s)
