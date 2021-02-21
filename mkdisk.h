@@ -57,7 +57,7 @@ string _MKDISK::getUnit(){
 void _MKDISK::exe(){
     if(this->size<=0){
         cout<<"ERROR:no se puede crear un disco con el tamaño." << this->size <<endl;
-    }else if(this->path=""){
+    }else if(this->path==""){
         cout<<"ERROR:el parámetro PATH es obligatorio."<<this->u<<endl;
     }else if(this->u!="k" && this->u!="m"){
         cout<<"ERROR:no existe la unidad de datos."<<this->u<<endl;

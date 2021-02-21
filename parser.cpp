@@ -517,7 +517,7 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  11
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   67
+#define YYLAST   69
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  34
@@ -629,7 +629,7 @@ static const yytype_int8 yypact[] =
        6,   -14,     8,    17,    18,    30,   -14,    31,   -14,    32,
       33,    34,    35,    36,    37,    38,    39,   -14,    43,   -13,
       26,    -4,    -3,    45,    28,    29,    -2,    40,    41,    42,
-      44,   -14,   -14,   -14,   -14,   -14,   -14,   -14,   -14,   -14,
+      48,   -14,   -14,   -14,   -14,   -14,   -14,   -14,   -14,   -14,
      -14,   -14,   -14,   -14,   -14,   -14,   -14
 };
 
@@ -650,8 +650,8 @@ static const yytype_int8 yydefact[] =
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -14,   -14,   -14,    46,   -14,   -14,   -14,   -14,    50,   -14,
-      49,   -14,    47
+     -14,   -14,   -14,    46,   -14,   -14,   -14,   -14,    44,   -14,
+      47,   -14,    49
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
@@ -671,8 +671,8 @@ static const yytype_int8 yytable[] =
       30,    31,    32,    39,    40,    33,    34,    35,    36,    55,
       57,    62,    22,    23,    24,    25,    41,    42,    43,    44,
       45,    46,    47,    48,    49,    50,    51,    53,    58,    59,
-      60,     0,    12,     0,     0,     0,     0,     0,     0,     0,
-       0,    63,    64,    65,    26,    66,    28,    37
+      60,    66,    12,     0,     0,     0,     0,     0,    26,     0,
+       0,    63,    64,    65,    28,     0,     0,     0,     0,    37
 };
 
 static const yytype_int8 yycheck[] =
@@ -682,8 +682,8 @@ static const yytype_int8 yycheck[] =
        9,    10,    11,     6,     6,    14,    15,    16,    17,    33,
       33,    33,     8,     9,    10,    11,     6,     6,     6,     6,
        6,     6,     6,     6,     6,     6,     3,    21,     3,    21,
-      21,    -1,     6,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      -1,    21,    21,    21,    14,    21,    17,    20
+      21,     3,     6,    -1,    -1,    -1,    -1,    -1,    14,    -1,
+      -1,    21,    21,    21,    17,    -1,    -1,    -1,    -1,    20
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
@@ -696,7 +696,7 @@ static const yytype_int8 yystos[] =
        9,    10,    11,    14,    15,    16,    17,    46,     6,     6,
        6,     6,     6,     6,     6,     6,     6,     6,     6,     6,
        6,     3,    21,    21,     4,    33,     4,    33,     3,    21,
-      21,     4,    33,    21,    21,    21,    21
+      21,     4,    33,    21,    21,    21,     3
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
@@ -1626,7 +1626,7 @@ yyreduce:
 
   case 31:
 #line 129 "gramatica.y"
-                           {fdiskV->setAdd((yyvsp[0].STRING));}
+                               {fdiskV->setAdd(atoi((yyvsp[0].NUM)));}
 #line 1631 "parser.cpp"
     break;
 

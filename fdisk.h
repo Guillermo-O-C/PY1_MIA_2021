@@ -18,7 +18,7 @@ class _FDISK{
         this->u="k";
         this->type="p";
         this->f="wf";
-        this->delete_ = "fast";
+        this->delete_ = "";
         this->name="";
         this->add=0;
     };
@@ -64,9 +64,14 @@ void _FDISK::setAdd(int add){
 };
 
 void _FDISK::exe(){
+    if(this->delete_!="" && this->add!=0){
+        cout <<"ERROR: Parámetros incompatibles, llamado a delete y add. "<<endl;
+    }
+    if(this->delete_=="") this->delete_="fast";
+
     if(this->size<=0){
         cout<<"ERROR:no se puede crear un disco con el tamaño " << this->size <<endl;
-    }else if(this->path=""){
+    }else if(this->path==""){
         cout<<"ERROR:el parámetro PATH es obligatorio."<<endl;
     }else if(this->type!="p" && this->type!="e" && this->type!="l"){
         cout<<"ERROR:no existe la type "<<this->type<<endl;
@@ -76,9 +81,32 @@ void _FDISK::exe(){
         cout<<"ERROR:no existe el fit "<<this->f<<endl;
     }else if(this->delete_!="fast" && this->delete_!="full"){
         cout<<"ERROR:el parametro delete no acepta el valor "<<this->delete_<<endl; 
-    }else if(this->name=""){
+    }else if(this->name==""){
         cout<<"ERROR:el parámetro NAME es obligatorio."<<endl;
     }else{
+        if(this->u=="k"){
+            this->size=this->size*1024;
+        }else if(this->u=="m"){
+            this->size=this->size*1024*1024;
+        }
+
+        FILE *existe = fopen(this->path.c_str(),"r");
+        if(existe==NULL){
+            cout << "ERROR: El disco "<<this->path<<" no existe."<<endl;
+            return;
+        }
+
+        if(this->type=="p"){
+            //particion primaria
+            //primarias + extendiadas son 4 como máximo
+        }else if(this->type=="e"){
+            //particion extendida
+            //solo puede haber 1 extendida por disco
+        }else{
+            //particion logica
+            //solo puede existir denro de una extendida sin sobrepasar su tamaño
+            //no se puede crear una lógica si no existe una extendida
+        }
 
 
     }
