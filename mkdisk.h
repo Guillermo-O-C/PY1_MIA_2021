@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdio.h>
 using namespace std;
+#include "mbr.h"
 
 class _MKDISK{
     private:
@@ -8,12 +9,14 @@ class _MKDISK{
         string f;
         string path;
         string u;
+        MBR * mbr;
     public:
         _MKDISK(){
             this->size=0;
             this->path="";
             this->f = "bf";
             this->u = "m";
+            this->mbr = new MBR();
         };
         void setSize(int size);
         void setFit(string f);
@@ -68,11 +71,6 @@ void _MKDISK::exe(){
         struct tm *tm;
         char fechayhora[20];
 
-        t = time(NULL);
-        tm = localtime(&t);
-        strftime(fechayhora, 20, "%Y/%m/%d %H:%M:%S", tm);
-        cout << fechayhora<<endl;
-
         if(this->u=="k"){
             this->size=this->size*1024;
         }else{
@@ -107,6 +105,24 @@ void _MKDISK::exe(){
             rewind(searchFile);
             cout<<"Disco Creado con éxito"<<endl;                       
         }
+        t = time(NULL);
+        tm = localtime(&t);
+        strftime(fechayhora, 20, "%Y/%m/%d %H:%M:%S", tm);
+        this->mbr->setTime(fechayhora);
+        this->mbr->setTamanio(this->size);
+        if(this->f=="bf"){
+            this->mbr->setFit('B');
+        }else if(this->f=="ff"){
+            this->mbr->setFit('F');
+        }else{
+            this->mbr->setFit('W');
+        }
+        
+        fseek(searchFile, 0, SEEK_SET);
+        fwrite(&this->mbr, sizeof(MBR), 1, searchFile);
+        fseek(searchFile, 0, SEEK_SET);
+        fread(&this->mbr, sizeof(MBR), 1, searchFile);
+        fflush(searchFile);        
         fclose(searchFile);
     }
 }

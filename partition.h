@@ -17,7 +17,7 @@ class partition{
     void setFit(char fit);
     void setStart(int start);
     void setSize(int size);
-    void setName(char name[16]);
+    void setName(char * name);
 };
 void partition::setStatus(char status){
     this->part_status=status;
@@ -34,6 +34,6 @@ void partition::setStart(int start){
 void partition::setSize(int size){
     this->part_size=size;
 };
-void partition::setName(char name[16]){
-    this->part_name=name;
+void partition::setName(char * name){
+    strcpy(this->part_name, name);
 };
