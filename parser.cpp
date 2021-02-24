@@ -78,6 +78,7 @@
 #include "mkdisk.h"
 #include "rmdisk.h"
 #include "fdisk.h"
+#include "rep.h"
 
 using namespace std;
 extern int yylex(void);
@@ -89,8 +90,9 @@ extern int linea;
 _MKDISK * mkdiskV;
 _RMDISK * rmdiskV;
 _FDISK * fdiskV;
+_REP * repV;
 
-#line 94 "parser.cpp"
+#line 96 "parser.cpp"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -168,7 +170,11 @@ extern int yydebug;
     rmusr = 285,
     chmod = 286,
     ugo = 287,
-    ruta = 288
+    ruta = 288,
+    rep = 289,
+    R_id = 290,
+    R_ruta = 291,
+    partition_id = 292
   };
 #endif
 
@@ -176,12 +182,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 72 "gramatica.y"
+#line 80 "gramatica.y"
 
     char*STRING;
     char*NUM;
 
-#line 185 "parser.cpp"
+#line 191 "parser.cpp"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -515,21 +521,21 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  11
+#define YYFINAL  13
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   69
+#define YYLAST   88
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  34
+#define YYNTOKENS  38
 /* YYNNTS -- Number of nonterminals.  */
-#define YYNNTS  13
+#define YYNNTS  16
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  33
+#define YYNRULES  43
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  67
+#define YYNSTATES  87
 
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   288
+#define YYMAXUTOK   292
 
 
 /* YYTRANSLATE(TOKEN-NUM) -- Symbol number corresponding to TOKEN-NUM
@@ -569,17 +575,19 @@ static const yytype_int8 yytranslate[] =
        2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    27,    28,    29,    30,    31,    32,    33
+      25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
+      35,    36,    37
 };
 
 #if YYDEBUG
   /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    79,    79,    83,    84,    88,    88,    89,    89,    90,
-      90,    91,    95,    96,   100,   101,   102,   103,   104,   108,
-     109,   113,   114,   118,   119,   123,   124,   125,   126,   127,
-     128,   129,   130,   131
+       0,    87,    87,    91,    92,    96,    96,    97,    97,    98,
+      98,    99,    99,   100,   104,   105,   109,   110,   111,   112,
+     113,   117,   118,   122,   123,   127,   128,   132,   133,   134,
+     135,   136,   137,   138,   139,   140,   144,   145,   149,   150,
+     151,   152,   153,   154
 };
 #endif
 
@@ -592,9 +600,10 @@ static const char *const yytname[] =
   "mkdisk", "size", "f", "u", "path", "rmdisk", "fdisk", "type", "delete_",
   "name", "add", "mount", "unmount", "mkfs", "id", "fs", "usuario",
   "password", "login", "logout", "mkgrp", "rmgrp", "mkusr", "rmusr",
-  "chmod", "ugo", "ruta", "$accept", "INIT", "INSTRUCCIONES",
-  "INSTRUCCION", "$@1", "$@2", "$@3", "MKDISKP", "MKDISKPARAM", "RMDISKP",
-  "RMDISKPARAM", "FDISKP", "FDISKPARAM", YY_NULLPTR
+  "chmod", "ugo", "ruta", "rep", "R_id", "R_ruta", "partition_id",
+  "$accept", "INIT", "INSTRUCCIONES", "INSTRUCCION", "$@1", "$@2", "$@3",
+  "$@4", "MKDISKP", "MKDISKPARAM", "RMDISKP", "RMDISKPARAM", "FDISKP",
+  "FDISKPARAM", "REPP", "REPPARAM", YY_NULLPTR
 };
 #endif
 
@@ -606,11 +615,11 @@ static const yytype_int16 yytoknum[] =
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
-     285,   286,   287,   288
+     285,   286,   287,   288,   289,   290,   291,   292
 };
 # endif
 
-#define YYPACT_NINF (-14)
+#define YYPACT_NINF (-18)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -624,13 +633,15 @@ static const yytype_int16 yytoknum[] =
      STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-       5,   -14,   -14,   -14,   -14,     7,     3,   -14,     0,     4,
-       6,   -14,   -14,    24,     0,   -14,     2,     4,   -14,    11,
-       6,   -14,     8,    17,    18,    30,   -14,    31,   -14,    32,
-      33,    34,    35,    36,    37,    38,    39,   -14,    43,   -13,
-      26,    -4,    -3,    45,    28,    29,    -2,    40,    41,    42,
-      48,   -14,   -14,   -14,   -14,   -14,   -14,   -14,   -14,   -14,
-     -14,   -14,   -14,   -14,   -14,   -14,   -14
+       2,   -18,   -18,   -18,   -18,   -18,     5,     0,   -18,     1,
+      11,    12,    13,   -18,   -18,    17,     1,   -18,    10,    11,
+     -18,    37,    12,   -18,     8,    13,   -18,    16,    23,    24,
+      26,   -18,    27,   -18,    29,    32,    35,    36,    43,    44,
+      49,    50,   -18,    51,    52,    53,    54,   -18,    20,    40,
+      41,    -2,     4,    60,    45,    46,     6,    47,    48,    55,
+      61,     7,    56,   -17,    38,   -18,   -18,   -18,   -18,   -18,
+     -18,   -18,   -18,   -18,   -18,   -18,   -18,   -18,   -18,   -18,
+     -18,   -18,   -18,   -18,   -18,   -18,   -18
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -638,27 +649,29 @@ static const yytype_int8 yypact[] =
      means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       0,    11,     5,     7,     9,     0,     0,     4,     0,     0,
-       0,     1,     3,     0,     6,    13,     0,     8,    20,     0,
-      10,    24,     0,     0,     0,     0,    12,     0,    19,     0,
-       0,     0,     0,     0,     0,     0,     0,    23,     0,     0,
+       0,    13,     5,     7,     9,    11,     0,     0,     4,     0,
+       0,     0,     0,     1,     3,     0,     6,    15,     0,     8,
+      22,     0,    10,    26,     0,    12,    37,     0,     0,     0,
+       0,    14,     0,    21,     0,     0,     0,     0,     0,     0,
+       0,     0,    25,     0,     0,     0,     0,    36,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,    14,    15,    16,    18,    17,    22,    21,    25,    28,
-      26,    33,    32,    27,    29,    30,    31
+       0,     0,     0,     0,     0,    16,    17,    18,    20,    19,
+      24,    23,    27,    30,    28,    35,    34,    29,    31,    32,
+      33,    39,    40,    38,    41,    42,    43
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -14,   -14,   -14,    46,   -14,   -14,   -14,   -14,    44,   -14,
-      47,   -14,    49
+     -18,   -18,   -18,    58,   -18,   -18,   -18,   -18,   -18,    57,
+     -18,    59,   -18,    62,   -18,    63
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-      -1,     5,     6,     7,     8,     9,    10,    14,    15,    17,
-      18,    20,    21
+      -1,     6,     7,     8,     9,    10,    11,    12,    16,    17,
+      19,    20,    22,    23,    25,    26
 };
 
   /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -666,54 +679,62 @@ static const yytype_int8 yydefgoto[] =
      number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      54,    56,    61,    -2,     1,    13,     1,    11,    52,    16,
-       2,    19,     2,    27,    38,     3,     4,     3,     4,    29,
-      30,    31,    32,    39,    40,    33,    34,    35,    36,    55,
-      57,    62,    22,    23,    24,    25,    41,    42,    43,    44,
-      45,    46,    47,    48,    49,    50,    51,    53,    58,    59,
-      60,    66,    12,     0,     0,     0,     0,     0,    26,     0,
-       0,    63,    64,    65,    28,     0,     0,     0,     0,    37
+      -2,     1,    68,     1,    84,    13,    15,     2,    70,     2,
+      75,    81,     3,     4,     3,     4,    18,    21,    24,    43,
+      85,    32,    48,    65,    44,    27,    28,    29,    30,    49,
+      50,    69,    51,    52,     5,    53,     5,    71,    54,    76,
+      82,    55,    56,    45,    46,    34,    35,    36,    37,    57,
+      58,    38,    39,    40,    41,    59,    60,    61,    62,    63,
+      64,    66,    67,    72,    80,    14,    73,    74,    77,    78,
+       0,    86,     0,    31,     0,     0,    79,    83,    33,     0,
+       0,     0,     0,     0,    42,     0,     0,     0,    47
 };
 
 static const yytype_int8 yycheck[] =
 {
-       4,     4,     4,     0,     1,     5,     1,     0,    21,     5,
-       7,     5,     7,    11,     6,    12,    13,    12,    13,     8,
-       9,    10,    11,     6,     6,    14,    15,    16,    17,    33,
-      33,    33,     8,     9,    10,    11,     6,     6,     6,     6,
-       6,     6,     6,     6,     6,     6,     3,    21,     3,    21,
-      21,     3,     6,    -1,    -1,    -1,    -1,    -1,    14,    -1,
-      -1,    21,    21,    21,    17,    -1,    -1,    -1,    -1,    20
+       0,     1,     4,     1,    21,     0,     5,     7,     4,     7,
+       4,     4,    12,    13,    12,    13,     5,     5,     5,    11,
+      37,    11,     6,     3,    16,     8,     9,    10,    11,     6,
+       6,    33,     6,     6,    34,     6,    34,    33,     6,    33,
+      33,     6,     6,    35,    36,     8,     9,    10,    11,     6,
+       6,    14,    15,    16,    17,     6,     6,     6,     6,     6,
+       6,    21,    21,     3,     3,     7,    21,    21,    21,    21,
+      -1,    33,    -1,    16,    -1,    -1,    21,    21,    19,    -1,
+      -1,    -1,    -1,    -1,    22,    -1,    -1,    -1,    25
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
      symbol of state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,     1,     7,    12,    13,    35,    36,    37,    38,    39,
-      40,     0,    37,     5,    41,    42,     5,    43,    44,     5,
-      45,    46,     8,     9,    10,    11,    42,    11,    44,     8,
-       9,    10,    11,    14,    15,    16,    17,    46,     6,     6,
+       0,     1,     7,    12,    13,    34,    39,    40,    41,    42,
+      43,    44,    45,     0,    41,     5,    46,    47,     5,    48,
+      49,     5,    50,    51,     5,    52,    53,     8,     9,    10,
+      11,    47,    11,    49,     8,     9,    10,    11,    14,    15,
+      16,    17,    51,    11,    16,    35,    36,    53,     6,     6,
        6,     6,     6,     6,     6,     6,     6,     6,     6,     6,
-       6,     3,    21,    21,     4,    33,     4,    33,     3,    21,
-      21,     4,    33,    21,    21,    21,     3
+       6,     6,     6,     6,     6,     3,    21,    21,     4,    33,
+       4,    33,     3,    21,    21,     4,    33,    21,    21,    21,
+       3,     4,    33,    21,    21,    37,    33
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    34,    35,    36,    36,    38,    37,    39,    37,    40,
-      37,    37,    41,    41,    42,    42,    42,    42,    42,    43,
-      43,    44,    44,    45,    45,    46,    46,    46,    46,    46,
-      46,    46,    46,    46
+       0,    38,    39,    40,    40,    42,    41,    43,    41,    44,
+      41,    45,    41,    41,    46,    46,    47,    47,    47,    47,
+      47,    48,    48,    49,    49,    50,    50,    51,    51,    51,
+      51,    51,    51,    51,    51,    51,    52,    52,    53,    53,
+      53,    53,    53,    53
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
 static const yytype_int8 yyr2[] =
 {
        0,     2,     1,     2,     1,     0,     3,     0,     3,     0,
-       3,     1,     2,     1,     4,     4,     4,     4,     4,     2,
-       1,     4,     4,     2,     1,     4,     4,     4,     4,     4,
+       3,     0,     3,     1,     2,     1,     4,     4,     4,     4,
+       4,     2,     1,     4,     4,     2,     1,     4,     4,     4,
+       4,     4,     4,     4,     4,     4,     2,     1,     4,     4,
        4,     4,     4,     4
 };
 
@@ -1505,145 +1526,193 @@ yyreduce:
   switch (yyn)
     {
   case 5:
-#line 88 "gramatica.y"
+#line 96 "gramatica.y"
            {mkdiskV = new _MKDISK();}
-#line 1511 "parser.cpp"
+#line 1532 "parser.cpp"
     break;
 
   case 6:
-#line 88 "gramatica.y"
+#line 96 "gramatica.y"
                                               {mkdiskV->exe();/*realiza la creación del disco*/}
-#line 1517 "parser.cpp"
+#line 1538 "parser.cpp"
     break;
 
   case 7:
-#line 89 "gramatica.y"
+#line 97 "gramatica.y"
              {rmdiskV = new _RMDISK();}
-#line 1523 "parser.cpp"
+#line 1544 "parser.cpp"
     break;
 
   case 8:
-#line 89 "gramatica.y"
+#line 97 "gramatica.y"
                                                 {rmdiskV->exe();/*realiza la eliminación del disco*/}
-#line 1529 "parser.cpp"
+#line 1550 "parser.cpp"
     break;
 
   case 9:
-#line 90 "gramatica.y"
+#line 98 "gramatica.y"
             {fdiskV = new _FDISK();}
-#line 1535 "parser.cpp"
+#line 1556 "parser.cpp"
     break;
 
   case 10:
-#line 90 "gramatica.y"
+#line 98 "gramatica.y"
                                             {fdiskV->exe();/*realiza la eliminación del disco*/}
-#line 1541 "parser.cpp"
+#line 1562 "parser.cpp"
     break;
 
   case 11:
-#line 91 "gramatica.y"
-            {std::cout << "error";}
-#line 1547 "parser.cpp"
+#line 99 "gramatica.y"
+          {repV = new _REP();}
+#line 1568 "parser.cpp"
     break;
 
-  case 14:
+  case 12:
+#line 99 "gramatica.y"
+                                    {repV->exe();/*Imprime los reportes*/}
+#line 1574 "parser.cpp"
+    break;
+
+  case 13:
 #line 100 "gramatica.y"
-                                {mkdiskV->setSize(atoi((yyvsp[0].NUM)));}
-#line 1553 "parser.cpp"
-    break;
-
-  case 15:
-#line 101 "gramatica.y"
-                         {mkdiskV->setFit((yyvsp[0].STRING));}
-#line 1559 "parser.cpp"
+            {std::cout << "error";}
+#line 1580 "parser.cpp"
     break;
 
   case 16:
-#line 102 "gramatica.y"
-                         {mkdiskV->setUnit((yyvsp[0].STRING));}
-#line 1565 "parser.cpp"
+#line 109 "gramatica.y"
+                                {mkdiskV->setSize(atoi((yyvsp[0].NUM)));}
+#line 1586 "parser.cpp"
     break;
 
   case 17:
-#line 103 "gramatica.y"
-                              {mkdiskV->setPath((yyvsp[0].STRING), false);}
-#line 1571 "parser.cpp"
+#line 110 "gramatica.y"
+                         {mkdiskV->setFit((yyvsp[0].STRING));}
+#line 1592 "parser.cpp"
     break;
 
   case 18:
-#line 104 "gramatica.y"
-                                {mkdiskV->setPath((yyvsp[0].STRING), true);}
-#line 1577 "parser.cpp"
+#line 111 "gramatica.y"
+                         {mkdiskV->setUnit((yyvsp[0].STRING));}
+#line 1598 "parser.cpp"
     break;
 
-  case 21:
+  case 19:
+#line 112 "gramatica.y"
+                              {mkdiskV->setPath((yyvsp[0].STRING), false);}
+#line 1604 "parser.cpp"
+    break;
+
+  case 20:
 #line 113 "gramatica.y"
+                                {mkdiskV->setPath((yyvsp[0].STRING), true);}
+#line 1610 "parser.cpp"
+    break;
+
+  case 23:
+#line 122 "gramatica.y"
                               {rmdiskV->setPath((yyvsp[0].STRING), false);}
-#line 1583 "parser.cpp"
+#line 1616 "parser.cpp"
     break;
 
-  case 22:
-#line 114 "gramatica.y"
-                                {rmdiskV->setPath((yyvsp[0].STRING), true);}
-#line 1589 "parser.cpp"
-    break;
-
-  case 25:
+  case 24:
 #line 123 "gramatica.y"
-                                {fdiskV->setSize(atoi((yyvsp[0].NUM)));}
-#line 1595 "parser.cpp"
-    break;
-
-  case 26:
-#line 124 "gramatica.y"
-                         {fdiskV->setUnit((yyvsp[0].STRING));}
-#line 1601 "parser.cpp"
+                                {rmdiskV->setPath((yyvsp[0].STRING), true);}
+#line 1622 "parser.cpp"
     break;
 
   case 27:
-#line 125 "gramatica.y"
-                            {fdiskV->setType((yyvsp[0].STRING));}
-#line 1607 "parser.cpp"
+#line 132 "gramatica.y"
+                                {fdiskV->setSize(atoi((yyvsp[0].NUM)));}
+#line 1628 "parser.cpp"
     break;
 
   case 28:
-#line 126 "gramatica.y"
-                         {fdiskV->setFit((yyvsp[0].STRING));}
-#line 1613 "parser.cpp"
+#line 133 "gramatica.y"
+                         {fdiskV->setUnit((yyvsp[0].STRING));}
+#line 1634 "parser.cpp"
     break;
 
   case 29:
-#line 127 "gramatica.y"
-                               {fdiskV->setDelete((yyvsp[0].STRING));}
-#line 1619 "parser.cpp"
+#line 134 "gramatica.y"
+                            {fdiskV->setType((yyvsp[0].STRING));}
+#line 1640 "parser.cpp"
     break;
 
   case 30:
-#line 128 "gramatica.y"
-                            {fdiskV->setName((yyvsp[0].STRING));}
-#line 1625 "parser.cpp"
+#line 135 "gramatica.y"
+                         {fdiskV->setFit((yyvsp[0].STRING));}
+#line 1646 "parser.cpp"
     break;
 
   case 31:
-#line 129 "gramatica.y"
-                               {fdiskV->setAdd(atoi((yyvsp[0].NUM)));}
-#line 1631 "parser.cpp"
+#line 136 "gramatica.y"
+                               {fdiskV->setDelete((yyvsp[0].STRING));}
+#line 1652 "parser.cpp"
     break;
 
   case 32:
-#line 130 "gramatica.y"
-                              {fdiskV->setPath((yyvsp[0].STRING), false);}
-#line 1637 "parser.cpp"
+#line 137 "gramatica.y"
+                            {fdiskV->setName((yyvsp[0].STRING));}
+#line 1658 "parser.cpp"
     break;
 
   case 33:
-#line 131 "gramatica.y"
+#line 138 "gramatica.y"
+                               {fdiskV->setAdd(atoi((yyvsp[0].NUM)));}
+#line 1664 "parser.cpp"
+    break;
+
+  case 34:
+#line 139 "gramatica.y"
+                              {fdiskV->setPath((yyvsp[0].STRING), false);}
+#line 1670 "parser.cpp"
+    break;
+
+  case 35:
+#line 140 "gramatica.y"
                                 {fdiskV->setPath((yyvsp[0].STRING), true);}
-#line 1643 "parser.cpp"
+#line 1676 "parser.cpp"
+    break;
+
+  case 38:
+#line 149 "gramatica.y"
+                            {repV->setName((yyvsp[0].STRING));}
+#line 1682 "parser.cpp"
+    break;
+
+  case 39:
+#line 150 "gramatica.y"
+                                {repV->setPath((yyvsp[0].STRING), true);}
+#line 1688 "parser.cpp"
+    break;
+
+  case 40:
+#line 151 "gramatica.y"
+                              {repV->setPath((yyvsp[0].STRING), false);}
+#line 1694 "parser.cpp"
+    break;
+
+  case 41:
+#line 152 "gramatica.y"
+                            {repV->setId((yyvsp[0].STRING));}
+#line 1700 "parser.cpp"
+    break;
+
+  case 42:
+#line 153 "gramatica.y"
+                                      {repV->setId((yyvsp[0].STRING));}
+#line 1706 "parser.cpp"
+    break;
+
+  case 43:
+#line 154 "gramatica.y"
+                                {repV->setRuta((yyvsp[0].STRING));}
+#line 1712 "parser.cpp"
     break;
 
 
-#line 1647 "parser.cpp"
+#line 1716 "parser.cpp"
 
       default: break;
     }
@@ -1881,7 +1950,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 133 "gramatica.y"
+#line 156 "gramatica.y"
 
 void yyerror(const char *s)
 {

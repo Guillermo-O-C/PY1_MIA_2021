@@ -1,4 +1,5 @@
 #include <iostream>
+#pragma once
 #include "partition.h"
 using namespace std;
 

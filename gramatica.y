@@ -9,6 +9,7 @@
 #include "mkdisk.h"
 #include "rmdisk.h"
 #include "fdisk.h"
+#include "rep.h"
 
 using namespace std;
 extern int yylex(void);
@@ -20,6 +21,7 @@ extern int linea;
 _MKDISK * mkdiskV;
 _RMDISK * rmdiskV;
 _FDISK * fdiskV;
+_REP * repV;
 %}
 
 %start INIT
@@ -55,6 +57,10 @@ _FDISK * fdiskV;
 %token<STRING> chmod
 %token<STRING> ugo
 %token<STRING> ruta
+%token<STRING> rep
+%token<STRING> R_id
+%token<STRING> R_ruta
+%token<STRING> partition_id
 
 %type<STRING> INIT
 %type<STRING> INSTRUCCION
@@ -65,6 +71,8 @@ _FDISK * fdiskV;
 %type<STRING> RMDISKPARAM
 %type<STRING> FDISKP
 %type<STRING> FDISKPARAM
+%type<STRING> REPP
+%type<STRING> REPPARAM
 
 %define parse.error verbose
 %locations
@@ -88,6 +96,7 @@ INSTRUCCION:
     mkdisk {mkdiskV = new _MKDISK();} MKDISKP {mkdiskV->exe();/*realiza la creación del disco*/}
     | rmdisk {rmdiskV = new _RMDISK();} RMDISKP {rmdiskV->exe();/*realiza la eliminación del disco*/}
     | fdisk {fdiskV = new _FDISK();} FDISKP {fdiskV->exe();/*realiza la eliminación del disco*/}
+    | rep {repV = new _REP();} REPP {repV->exe();/*Imprime los reportes*/}
     | error {std::cout << "error";}
 ;
 
@@ -129,6 +138,20 @@ FDISKPARAM :
     |   guion add igual numero {fdiskV->setAdd(atoi($4));}
     |   guion path igual ruta {fdiskV->setPath($4, false);}
     |   guion path igual cadena {fdiskV->setPath($4, true);}
+;
+
+REPP:
+    REPP REPPARAM 
+    | REPPARAM
+;
+
+REPPARAM:
+        guion name igual id {repV->setName($4);}
+    |   guion path igual cadena {repV->setPath($4, true);}
+    |   guion path igual ruta {repV->setPath($4, false);}
+    |   guion R_id igual id {repV->setId($4);}
+    |   guion R_id igual partition_id {repV->setId($4);}
+    |   guion R_ruta igual ruta {repV->setRuta($4);}
 ;
 %%
 void yyerror(const char *s)

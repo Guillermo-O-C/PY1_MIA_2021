@@ -13,14 +13,16 @@ int linea = 1;
 
 comentario [#]([^\n])* 
 numero [-]?[0-9]+
+partition_id "66"[0-9]+[A-Z]
 cadena \"(\\\"|\\n|\\t|\\r|\\\\|[^\"])*\" 
-ruta (([/]([a-zA-Z]|[0-9]|"_")+)+)(".")(d)(k)
-id ([a-zA-Z])([a-zA-Z][|0-9]|"_")*
+ruta (([/]([a-zA-Z]|[0-9]|"_"|".")+)+)
+id ([a-zA-Z])([a-zA-Z]|[0-9]|"_")*
 
 %%
 ('\s'|'\r'|'\t')+ {};
 "\n" {linea++;};
 {comentario} {};
+{partition_id} {yylval.STRING = strdup(yytext);return (partition_id);};
 {numero} {yylval.STRING = strdup(yytext);return (numero);};
 {cadena} {yylval.STRING = strdup(yytext); return (cadena);};
 ("–"|"-") {yylval.STRING = strdup(yytext);return (guion);};
@@ -39,7 +41,6 @@ id ([a-zA-Z])([a-zA-Z][|0-9]|"_")*
 "mount" {yylval.STRING = strdup(yytext);return (mount);};
 "unmount" {yylval.STRING = strdup(yytext);return (unmount);};
 "mkfs" {yylval.STRING = strdup(yytext);return (mkfs);};
-"id" {yylval.STRING = strdup(yytext);return (id);};
 "fs" {yylval.STRING = strdup(yytext);return (fs);};
 "usuario" {yylval.STRING = strdup(yytext);return (usuario);};
 "password" {yylval.STRING = strdup(yytext);return (password);};
@@ -51,6 +52,9 @@ id ([a-zA-Z])([a-zA-Z][|0-9]|"_")*
 "rmusr" {yylval.STRING = strdup(yytext);return (rmusr);};
 "chmod" {yylval.STRING = strdup(yytext);return (chmod);};
 "ugo" {yylval.STRING = strdup(yytext);return (ugo);};
+"rep" {yylval.STRING = strdup(yytext);return (rep);};
+"id" {yylval.STRING = strdup(yytext);return (R_id);};
+"ruta" {yylval.STRING = strdup(yytext);return (R_ruta);};
 {id} {yylval.STRING = strdup(yytext); return (id);};
 {ruta} {yylval.STRING = strdup(yytext); return (ruta);};
 . {}

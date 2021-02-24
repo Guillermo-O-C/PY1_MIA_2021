@@ -79,7 +79,11 @@ extern int yydebug;
     rmusr = 285,
     chmod = 286,
     ugo = 287,
-    ruta = 288
+    ruta = 288,
+    rep = 289,
+    R_id = 290,
+    R_ruta = 291,
+    partition_id = 292
   };
 #endif
 
@@ -87,12 +91,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 72 "gramatica.y"
+#line 80 "gramatica.y"
 
     char*STRING;
     char*NUM;
 
-#line 96 "parser.h"
+#line 100 "parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
