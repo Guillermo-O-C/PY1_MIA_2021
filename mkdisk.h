@@ -9,14 +9,12 @@ class _MKDISK{
         string f;
         string path;
         string u;
-        MBR * mbr;
     public:
         _MKDISK(){
             this->size=0;
             this->path="";
             this->f = "bf";
             this->u = "m";
-            this->mbr = new MBR();
         };
         void setSize(int size);
         void setFit(string f);
@@ -67,9 +65,6 @@ void _MKDISK::exe(){
     }else if(this->f!="bf" && this->f!="ff" && this->f!="wf"){
         cout<<"ERROR:no existe el fit."<<this->f<<endl;
     }else{
-        time_t t;
-        struct tm *tm;
-        char fechayhora[20];
 
         if(this->u=="k"){
             this->size=this->size*1024;
@@ -84,9 +79,27 @@ void _MKDISK::exe(){
             return;
         }
         
+        MBR mbr;
+        time_t t;
+        struct tm *tm;
+        char fechayhora[16];
+        t = time(NULL);
+        tm = localtime(&t);
+        strftime(fechayhora, 20, "%d/%m/%Y %H:%M", tm);
+        strcpy(mbr.mbr_fecha_creacion,fechayhora);
+        mbr.mbr_tamanio=this->size;
+        if(f=="bf"){
+            mbr.disk_fit = 'B';
+        }else if(this->f=="ff"){
+            mbr.disk_fit = 'F';
+        }else{
+            mbr.disk_fit = 'W';
+        }
+        mbr.mbr_disk_signature =rand() % 99999999 + 10000000;
+
         FILE *searchFile =  fopen(this->path.c_str(), "wb+");
         if(searchFile != NULL){
-            fwrite("\0", 1, 1, searchFile);
+            fwrite(&mbr, sizeof(MBR), 1, searchFile);
             fseek(searchFile, this->size-1, SEEK_SET);
             fwrite("\0", 1, 1, searchFile);
             rewind(searchFile);
@@ -99,30 +112,13 @@ void _MKDISK::exe(){
             system(command.c_str());
 
             searchFile = fopen(this->path.c_str(), "wb+");
-            fwrite("\0", 1, 1, searchFile);
+            fwrite(&mbr, sizeof(MBR), 1, searchFile);
             fseek(searchFile, this->size-1, SEEK_SET);
             fwrite("\0", 1, 1, searchFile);
             rewind(searchFile);
             cout<<"Disco Creado con éxito"<<endl;                       
         }
-        t = time(NULL);
-        tm = localtime(&t);
-        strftime(fechayhora, 20, "%Y/%m/%d %H:%M:%S", tm);
-        this->mbr->setTime(fechayhora);
-        this->mbr->setTamanio(this->size);
-        if(this->f=="bf"){
-            this->mbr->setFit('B');
-        }else if(this->f=="ff"){
-            this->mbr->setFit('F');
-        }else{
-            this->mbr->setFit('W');
-        }
-        
-        fseek(searchFile, 0, SEEK_SET);
-        fwrite(&this->mbr, sizeof(MBR), 1, searchFile);
-        fseek(searchFile, 0, SEEK_SET);
-        fread(&this->mbr, sizeof(MBR), 1, searchFile);
-        fflush(searchFile);        
+        fflush(searchFile);   
         fclose(searchFile);
     }
 }

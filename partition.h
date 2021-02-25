@@ -2,39 +2,12 @@
 #pragma once
 using namespace std;
 
-class partition{
-    private:
-    char part_status;
-    char part_type;
-    char part_fit;
-    int part_start;
-    int part_size;
-    char part_name[16];
-
+struct partition{
     public:
-    partition(){};
-    void setStatus(char status);
-    void setType(char type);
-    void setFit(char fit);
-    void setStart(int start);
-    void setSize(int size);
-    void setName(char * name);
-};
-void partition::setStatus(char status){
-    this->part_status=status;
-};
-void partition::setType(char type){
-    this->part_type=type;
-};
-void partition::setFit(char fit){
-    this->part_fit=fit;
-};
-void partition::setStart(int start){
-    this->part_start=start;
-};
-void partition::setSize(int size){
-    this->part_size=size;
-};
-void partition::setName(char * name){
-    strcpy(this->part_name, name);
+    char part_status='0';
+    char part_type='P';
+    char part_fit='W';
+    int part_start=-1;
+    int part_size=0;
+    char part_name[16]="";
 };

@@ -31,6 +31,7 @@ class _FDISK{
     void setName(string name);
     void setAdd(int add);
     void exe();
+    void setPartition(MBR mbr, int NoParticion, int start);
     string toLowerCase(string cadena);
 };
 
@@ -86,7 +87,8 @@ void _FDISK::exe(){
     }else{
         if(this->u=="k"){
             this->size=this->size*1024;
-        }else if(this->u=="m"){
+        }
+        else if(this->u=="m"){
             this->size=this->size*1024*1024;
         }
 
@@ -95,20 +97,83 @@ void _FDISK::exe(){
             cout << "ERROR: El disco "<<this->path<<" no existe."<<endl;
             return;
         }
+        fclose(existe);
+
+        FILE *search =  fopen(this->path.c_str(), "rb+");
+        MBR mbr;
+        fread(&mbr, sizeof(MBR), 1, search);
+
+        //calcular con el size, y el fit el byte de inicio.
 
         if(this->type=="p"){
-            //particion primaria
-            //primarias + extendiadas son 4 como máximo
-        }else if(this->type=="e"){
-            //particion extendida
-            //solo puede haber 1 extendida por disco
-        }else{
-            //particion logica
-            //solo puede existir denro de una extendida sin sobrepasar su tamaño
-            //no se puede crear una lógica si no existe una extendida
+            if(mbr.mbr_partition_1.part_name==""){
+                setPartition(mbr, 1, start);
+            }else if(mbr.mbr_partition_2part_name!=""){
+                setPartition(mbr, 2, start);
+            }else if(mbr.mbr_partition_3.part_name!=""){
+                setPartition(mbr, 3, start);
+            }else if(mbr.mbr_partition_4.part_name!=""){
+                setPartition(mbr, 4, start);
+            }else{
+                cout << "ERROR:No se ha creado la partición en el disco indicado ya que ya hay 4 particiones en existencia."
+            }
         }
+        else if(this->type=="e"){
+            if(mbr.mbr_partition_1.part_type!="e" && mbr.mbr_partition_2.part_type!="e" && mbr.mbr_partition_3.part_type!="e" && mbr.mbr_partition_4.part_type!="e"){
+                cout << "ERROR: Ya existe una partición extendida en este disco.";
+            }else if(mbr.mbr_partition_1.part_name==""){
+                setPartition(mbr, 1, start);
+            }else if(mbr.mbr_partition_2part_name!=""){
+                setPartition(mbr, 2, start);
+            }else if(mbr.mbr_partition_3.part_name!=""){
+                setPartition(mbr, 3, start);
+            }else if(mbr.mbr_partition_4.part_name!=""){
+                setPartition(mbr, 4, start);
+            }else{
+                cout << "ERROR:No se ha creado la partición en el disco indicado ya que ya hay 4 particiones en existencia."
+            }
+        }
+        else{
+            if(mbr.mbr_partition_1.part_type!="e" && mbr.mbr_partition_2.part_type!="e" && mbr.mbr_partition_3.part_type!="e" && mbr.mbr_partition_4.part_type!="e"){
+                cout << "ERROR: No se puede crear la partición lógica porque no existe una partición extendida en este disco.";
+            }
+        }
+        
+        fflush(search);
+        fclose(search);
+    }
+}
 
-
+void _FDISK::setPartition(MBR mbr, int NoParticion, int start){
+    switch(NoParticion){
+        case 1:
+            mbr.mbr_partition_1.part_fit=this->f;
+            mbr.mbr_partition_1.part_name=this->name;
+            mbr.mbr_partition_1.part_size=this->size;
+            mbr.mbr_partition_1.part_start=start;
+            mbr.mbr_partition_1.part_type=this->type;
+            break;
+        case 2:
+            mbr.mbr_partition_2.part_fit=this->f;
+            mbr.mbr_partition_2.part_name=this->name;
+            mbr.mbr_partition_2.part_size=this->size;
+            mbr.mbr_partition_2.part_start=start;
+            mbr.mbr_partition_2.part_type=this->type;
+            break;
+        case 3:
+            mbr.mbr_partition_3.part_fit=this->f;
+            mbr.mbr_partition_3.part_name=this->name;
+            mbr.mbr_partition_3.part_size=this->size;
+            mbr.mbr_partition_31.part_start=start;
+            mbr.mbr_partition_3.part_type=this->type;
+            break;
+        case 4:
+            mbr.mbr_partition_4.part_fit=this->f;
+            mbr.mbr_partition_4.part_name=this->name;
+            mbr.mbr_partition_4.part_size=this->size;
+            mbr.mbr_partition_4.part_start=start;
+            mbr.mbr_partition_4.part_type=this->type;
+            break;
     }
 }
 
