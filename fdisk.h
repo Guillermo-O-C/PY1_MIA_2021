@@ -107,6 +107,11 @@ void _FDISK::exe(){
         MBR mbr;
         fread(&mbr, sizeof(MBR), 1, search);
 
+        if(mbr.mbr_partition_1.part_name==this->name && mbr.mbr_partition_1.part_status=='1' ||  mbr.mbr_partition_2.part_name==this->name && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_name==this->name && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_name==this->name && mbr.mbr_partition_4.part_status=='1'){
+            cout << "ERROR: Nombre repetido de particiones en este disco."<<endl;
+            return;
+        } 
+
         //calcular con el size, y el fit el byte de inicio.
         int freeSpace =  mbr.mbr_tamanio-sizeof(MBR)-mbr.mbr_partition_1.part_size-mbr.mbr_partition_2.part_size-mbr.mbr_partition_3.part_size-mbr.mbr_partition_4.part_size;
 
@@ -130,7 +135,8 @@ void _FDISK::exe(){
                 bestOption->part_type=this->type.c_str()[0];
                 bestOption->part_status='1';
             }else{
-                cout << "ERROR:No se ha creado la partición en el disco indicado ya que ya hay 4 particiones en existencia.";
+                cout << "ERROR:No se ha creado la partición en el disco indicado ya que ya hay 4 particiones en existencia."<<endl;
+                return;
             }
         }
         else if(this->type=="e"){
@@ -154,7 +160,8 @@ void _FDISK::exe(){
                 bestOption->part_type=this->type.c_str()[0];
                 bestOption->part_status='1';
             }else{
-                cout << "ERROR:No se ha creado la partición en el disco indicado ya que ya hay 4 particiones en existencia.";
+                cout << "ERROR:No se ha creado la partición en el disco indicado ya que ya hay 4 particiones en existencia."<<endl;
+                return;
             }
         }
         else{
@@ -207,6 +214,7 @@ int _FDISK::choosePartition(MBR& mbr){
     }
     if(bestOption==-1){
         cout << "No se a podido crear la partición, ninguna tiene suficiente espacio."<<endl;
+        bestOption=-2;
     }
     return bestOption+1; 
 }
