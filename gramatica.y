@@ -134,7 +134,8 @@ FDISKPARAM :
     |   guion type igual id {fdiskV->setType($4);}
     |   guion f igual id {fdiskV->setFit($4);}
     |   guion delete_ igual id {fdiskV->setDelete($4);}
-    |   guion name igual id {fdiskV->setName($4);}
+    |   guion name igual id {fdiskV->setName($4, false);}
+    |   guion name igual cadena {fdiskV->setName($4, true);}
     |   guion add igual numero {fdiskV->setAdd(atoi($4));}
     |   guion path igual ruta {fdiskV->setPath($4, false);}
     |   guion path igual cadena {fdiskV->setPath($4, true);}

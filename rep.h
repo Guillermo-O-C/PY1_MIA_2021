@@ -60,12 +60,30 @@ void _REP::graphMbr(){
     graph=graph+"</td></tr><tr><td>mbr_fecha_creacion:</td><td>"+fecha.substr(0,  fecha.length()-2);
     graph=graph+"</td></tr><tr><td>mbr_disk_signture:</td><td>"+to_string(mbr.mbr_disk_signature);
     graph=graph+"</td></tr><tr><td>Disk_fit:</td><td>"+mbr.disk_fit;
+    graph=graph+"</td></tr><tr><td>part_name_1:</td><td>"+mbr.mbr_partition_1.part_name;
     graph=graph+"</td></tr><tr><td>part_status_1:</td><td>"+mbr.mbr_partition_1.part_status;
     graph=graph+"</td></tr><tr><td>part_type_1:</td><td>"+mbr.mbr_partition_1.part_type;
     graph=graph+"</td></tr><tr><td>part_fit_1:</td><td>"+mbr.mbr_partition_1.part_fit;
-    graph=graph+"</td></tr><tr><td>part__stax_1:</td><td>";
+    graph=graph+"</td></tr><tr><td>part__start_1:</td><td>"+to_string(mbr.mbr_partition_1.part_start);
     graph=graph+"</td></tr><tr><td>part_size_1:</td><td>"+to_string(mbr.mbr_partition_1.part_size);
-    graph=graph+"</td></tr><tr><td>part_name_1:</td><td>"+mbr.mbr_partition_1.part_name;
+    graph=graph+"</td></tr><tr><td>part_name_2:</td><td>"+mbr.mbr_partition_2.part_name;
+    graph=graph+"</td></tr><tr><td>part_status_2:</td><td>"+mbr.mbr_partition_2.part_status;
+    graph=graph+"</td></tr><tr><td>part_type_2:</td><td>"+mbr.mbr_partition_2.part_type;
+    graph=graph+"</td></tr><tr><td>part_fit_2:</td><td>"+mbr.mbr_partition_2.part_fit;
+    graph=graph+"</td></tr><tr><td>part__start_2:</td><td>"+to_string(mbr.mbr_partition_2.part_start);
+    graph=graph+"</td></tr><tr><td>part_size_2:</td><td>"+to_string(mbr.mbr_partition_2.part_size);
+    graph=graph+"</td></tr><tr><td>part_name_3:</td><td>"+mbr.mbr_partition_3.part_name;
+    graph=graph+"</td></tr><tr><td>part_status_3:</td><td>"+mbr.mbr_partition_3.part_status;
+    graph=graph+"</td></tr><tr><td>part_type_3:</td><td>"+mbr.mbr_partition_3.part_type;
+    graph=graph+"</td></tr><tr><td>part_fit_3:</td><td>"+mbr.mbr_partition_3.part_fit;
+    graph=graph+"</td></tr><tr><td>part__start_3:</td><td>"+to_string(mbr.mbr_partition_3.part_start);
+    graph=graph+"</td></tr><tr><td>part_size_3:</td><td>"+to_string(mbr.mbr_partition_3.part_size);
+    graph=graph+"</td></tr><tr><td>part_name_4:</td><td>"+mbr.mbr_partition_4.part_name;
+    graph=graph+"</td></tr><tr><td>part_status_4:</td><td>"+mbr.mbr_partition_4.part_status;
+    graph=graph+"</td></tr><tr><td>part_type_4:</td><td>"+mbr.mbr_partition_4.part_type;
+    graph=graph+"</td></tr><tr><td>part_fit_4:</td><td>"+mbr.mbr_partition_4.part_fit;
+    graph=graph+"</td></tr><tr><td>part__start_4:</td><td>"+to_string(mbr.mbr_partition_4.part_start);
+    graph=graph+"</td></tr><tr><td>part_size_4:</td><td>"+to_string(mbr.mbr_partition_4.part_size);
     graph=graph+"</td></tr></table>>;\n}";
     Print(graph, "MBR");
 }
@@ -76,58 +94,28 @@ void _REP::graphDisk(){
     fread(&mbr, sizeof(MBR), 1, search);
     fclose(search);
     string extended, graph = "digraph G {\nlabel = <<table><tr><td rowspan=\"2\">MBR</td>";
-
-    //calcular los porcantajes de disco de cada particion
-    
-    int size1, size2, size3, size4;
-    if(mbr.mbr_partition_1.part_type=='E'){
-        graph=graph+"<td>Extendida</td>";
-        extended="<tr><td";
-
-        //recolectar los datos de la extendida 
-
-        extended=extended+"</td></tr>";
-    }else if(mbr.mbr_partition_1.part_size==0){
-        graph=graph+"<td rowspan=\"2\">Libre "+to_string(size1)+"% del disco</td>";
-    }else{
-        graph=graph+"<td rowspan=\"2\">Principal</td>";
+    partition particiones[4] = {mbr.mbr_partition_1, mbr.mbr_partition_2, mbr.mbr_partition_3, mbr.mbr_partition_4};
+    for(int i =0;i<4;i++){
+        if(particiones[i].part_size==0) continue;
+        cout << "Psize " <<to_string(particiones[i].part_size)<<endl;
+        int porcentaje = particiones[i].part_size*100;
+        porcentaje=porcentaje/mbr.mbr_tamanio;
+        cout << to_string(particiones[i].part_size)+" representa el "<<to_string(porcentaje)+ " del total "+to_string(mbr.mbr_tamanio)<<endl;
+        if(particiones[i].part_status=='0'){
+            graph=graph+"<td colspan=\"2\">Libre "+to_string(porcentaje)+"%</td>";
+        }else{
+            if(particiones[i].part_type=='p'){
+                graph=graph+"<td >Primaria \n"+to_string(porcentaje)+"%</td>";
+            }else{//extendida
+                //los porcentajes se calculan sobre el porcentaje de la extendida
+                int colspan =0;//calcular el encabezado de la extendida
+                graph=graph+"<td >Extendida</td>";
+                extended="</tr><tr><td></td>";
+            }
+        }
     }
-    if(mbr.mbr_partition_2.part_type=='E'){
-        graph=graph+"<td>Extendida</td>";
-        extended="<tr><td";
-
-        //recolectar los datos de la extendida 
-
-        extended=extended+"</td></tr>";
-    }else if(mbr.mbr_partition_2.part_size==0){
-        graph=graph+"<td rowspan=\"2\">Libre \n"+to_string(size2)+"% del disco</td>";
-    }else{
-        graph=graph+"<td rowspan=\"2\">Principal</td>";
-    }
-    if(mbr.mbr_partition_3.part_type=='E'){
-        graph=graph+"<td>Extendida</td>";
-        extended="<tr><td";
-
-        //recolectar los datos de la extendida 
-
-        extended=extended+"</td></tr>";
-    }else if(mbr.mbr_partition_3.part_size==0){
-        graph=graph+"<td rowspan=\"2\">Libre \n"+to_string(size3)+"% del disco</td>";
-    }else{
-        graph=graph+"<td rowspan=\"2\">Principal</td>";
-    }
-    if(mbr.mbr_partition_4.part_type=='E'){
-        graph=graph+"<td>Extendida</td>";
-        extended="<tr><td";
-
-        //recolectar los datos de la extendida 
-
-        extended=extended+"</td></tr>";
-    }else if(mbr.mbr_partition_4.part_size==0){
-        graph=graph+"<td rowspan=\"2\">Libre \n"+to_string(size4)+"% del disco</td>";
-    }else{
-        graph=graph+"<td rowspan=\"2\">Principal</td>";
-    }
+    int freeSpace =  mbr.mbr_tamanio-sizeof(MBR)-mbr.mbr_partition_1.part_size-mbr.mbr_partition_2.part_size-mbr.mbr_partition_3.part_size-mbr.mbr_partition_4.part_size;
+    if(freeSpace>0) graph=graph+"<td colspan=\"2\">Libre "+to_string((freeSpace*100)/mbr.mbr_tamanio)+"</td>";
     graph=graph+extended+"</tr></table>>;}";
     Print(graph, "DISK");
 }

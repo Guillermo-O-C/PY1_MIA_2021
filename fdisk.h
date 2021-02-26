@@ -28,10 +28,10 @@ class _FDISK{
     void setType(string type);
     void setFit(string f);
     void setDelete(string delete_);
-    void setName(string name);
+    void setName(string name, bool isCadena);
     void setAdd(int add);
     void exe();
-    void setPartition(MBR mbr, int NoParticion, int start);
+    int choosePartition(MBR& mbr);
     string toLowerCase(string cadena);
 };
 
@@ -57,8 +57,12 @@ void _FDISK::setFit(string f){
 void _FDISK::setDelete(string delete_){
     this->delete_=toLowerCase(delete_);
 };
-void _FDISK::setName(string name){
-    this->name=toLowerCase(name);
+void _FDISK::setName(string name, bool isCadena){
+    if(isCadena){
+        this->name = name.substr(1, name.length()-2);
+    }else{
+        this->name = name;
+    }
 };
 void _FDISK::setAdd(int add){
     this->add=add;
@@ -104,79 +108,108 @@ void _FDISK::exe(){
         fread(&mbr, sizeof(MBR), 1, search);
 
         //calcular con el size, y el fit el byte de inicio.
+        int freeSpace =  mbr.mbr_tamanio-sizeof(MBR)-mbr.mbr_partition_1.part_size-mbr.mbr_partition_2.part_size-mbr.mbr_partition_3.part_size-mbr.mbr_partition_4.part_size;
 
         if(this->type=="p"){
-            if(mbr.mbr_partition_1.part_name==""){
-                setPartition(mbr, 1, start);
-            }else if(mbr.mbr_partition_2part_name!=""){
-                setPartition(mbr, 2, start);
-            }else if(mbr.mbr_partition_3.part_name!=""){
-                setPartition(mbr, 3, start);
-            }else if(mbr.mbr_partition_4.part_name!=""){
-                setPartition(mbr, 4, start);
+            if(mbr.mbr_partition_1.part_status=='0' || mbr.mbr_partition_2.part_status=='0' || mbr.mbr_partition_3.part_status=='0' || mbr.mbr_partition_4.part_status=='0'){
+                int option = choosePartition(mbr);
+                partition * bestOption = (option==1)?&mbr.mbr_partition_1: (option==2)?&mbr.mbr_partition_2:(option==3)?&mbr.mbr_partition_3:&mbr.mbr_partition_4;
+                if(bestOption->part_size==-1) return;
+                if(bestOption->part_size==0 && (this->size>freeSpace)){
+                    cout<< "ERROR: No hay suficiente espacio para crear la particion, solo hay "+to_string(freeSpace)+" bytes."<<endl; ;
+                    return;
+                }
+                if(bestOption->part_size==0){
+                    int start =  sizeof(MBR)+mbr.mbr_partition_1.part_size+mbr.mbr_partition_2.part_size+mbr.mbr_partition_3.part_size+mbr.mbr_partition_4.part_size;
+                    bestOption->part_start=start;
+                    cout << "the start byte will be "+to_string(start)<<endl;
+                }
+                bestOption->part_fit=this->f.c_str()[0]; 
+                strcpy(bestOption->part_name,this->name.c_str());
+                bestOption->part_size=this->size;
+                bestOption->part_type=this->type.c_str()[0];
+                bestOption->part_status='1';
             }else{
-                cout << "ERROR:No se ha creado la partición en el disco indicado ya que ya hay 4 particiones en existencia."
+                cout << "ERROR:No se ha creado la partición en el disco indicado ya que ya hay 4 particiones en existencia.";
             }
         }
         else if(this->type=="e"){
-            if(mbr.mbr_partition_1.part_type!="e" && mbr.mbr_partition_2.part_type!="e" && mbr.mbr_partition_3.part_type!="e" && mbr.mbr_partition_4.part_type!="e"){
+            if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type!='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type!='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type!='e' && mbr.mbr_partition_4.part_status=='1'){
                 cout << "ERROR: Ya existe una partición extendida en este disco.";
-            }else if(mbr.mbr_partition_1.part_name==""){
-                setPartition(mbr, 1, start);
-            }else if(mbr.mbr_partition_2part_name!=""){
-                setPartition(mbr, 2, start);
-            }else if(mbr.mbr_partition_3.part_name!=""){
-                setPartition(mbr, 3, start);
-            }else if(mbr.mbr_partition_4.part_name!=""){
-                setPartition(mbr, 4, start);
+            }else if(mbr.mbr_partition_1.part_status=='0' || mbr.mbr_partition_2.part_status=='0' || mbr.mbr_partition_3.part_status=='0' || mbr.mbr_partition_4.part_status=='0'){
+                int option = choosePartition(mbr);
+                partition * bestOption = (option==1)?&mbr.mbr_partition_1: (option==2)?&mbr.mbr_partition_2:(option==3)?&mbr.mbr_partition_3:&mbr.mbr_partition_4;
+                if(bestOption->part_size==-1) return;
+                if(bestOption->part_size==0 && (this->size>freeSpace)){
+                    cout<< "ERROR: No hay suficiente espacio para crear la particion, solo hay "+to_string(freeSpace)+" bytes."<<endl; ;
+                    return;
+                }
+                if(bestOption->part_size==0){
+                    int start =  sizeof(MBR)+mbr.mbr_partition_1.part_size+mbr.mbr_partition_2.part_size+mbr.mbr_partition_3.part_size+mbr.mbr_partition_4.part_size;
+                    bestOption->part_start=start;
+                }
+                bestOption->part_fit=this->f.c_str()[0]; 
+                strcpy(bestOption->part_name,this->name.c_str());
+                bestOption->part_size=this->size;
+                bestOption->part_type=this->type.c_str()[0];
+                bestOption->part_status='1';
             }else{
-                cout << "ERROR:No se ha creado la partición en el disco indicado ya que ya hay 4 particiones en existencia."
+                cout << "ERROR:No se ha creado la partición en el disco indicado ya que ya hay 4 particiones en existencia.";
             }
         }
         else{
-            if(mbr.mbr_partition_1.part_type!="e" && mbr.mbr_partition_2.part_type!="e" && mbr.mbr_partition_3.part_type!="e" && mbr.mbr_partition_4.part_type!="e"){
+            if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type!='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type!='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type!='e' && mbr.mbr_partition_4.part_status=='1'){
                 cout << "ERROR: No se puede crear la partición lógica porque no existe una partición extendida en este disco.";
             }
         }
-        
-        fflush(search);
         fclose(search);
+        FILE *f = fopen(this->path.c_str(), "wb+");
+        fwrite(&mbr, sizeof(MBR), 1, f);
+        fflush(f);
+        fclose(f);
+        cout <<"La partición ha sido creada exitosamente."<<endl;
     }
 }
-
-void _FDISK::setPartition(MBR mbr, int NoParticion, int start){
-    switch(NoParticion){
-        case 1:
-            mbr.mbr_partition_1.part_fit=this->f;
-            mbr.mbr_partition_1.part_name=this->name;
-            mbr.mbr_partition_1.part_size=this->size;
-            mbr.mbr_partition_1.part_start=start;
-            mbr.mbr_partition_1.part_type=this->type;
-            break;
-        case 2:
-            mbr.mbr_partition_2.part_fit=this->f;
-            mbr.mbr_partition_2.part_name=this->name;
-            mbr.mbr_partition_2.part_size=this->size;
-            mbr.mbr_partition_2.part_start=start;
-            mbr.mbr_partition_2.part_type=this->type;
-            break;
-        case 3:
-            mbr.mbr_partition_3.part_fit=this->f;
-            mbr.mbr_partition_3.part_name=this->name;
-            mbr.mbr_partition_3.part_size=this->size;
-            mbr.mbr_partition_31.part_start=start;
-            mbr.mbr_partition_3.part_type=this->type;
-            break;
-        case 4:
-            mbr.mbr_partition_4.part_fit=this->f;
-            mbr.mbr_partition_4.part_name=this->name;
-            mbr.mbr_partition_4.part_size=this->size;
-            mbr.mbr_partition_4.part_start=start;
-            mbr.mbr_partition_4.part_type=this->type;
-            break;
+int _FDISK::choosePartition(MBR& mbr){
+    int bestOption=-1;//indicar que el objeto nunca ha sido asignado
+    partition opciones[4] = {mbr.mbr_partition_1, mbr.mbr_partition_2, mbr.mbr_partition_3,mbr.mbr_partition_4};
+    for(int i =0;i<4;i++){
+        cout << "probando la particion " + to_string(i)<<endl;
+        if(opciones[i].part_status=='0'){
+            if(opciones[i].part_size==0 || opciones[i].part_size>=this->size){//es una nueva o es una con suficiente espacio
+                if(mbr.disk_fit=='B'){
+                    if(bestOption==-1){
+                        bestOption=i;
+        cout << "best fit is  " + to_string(i)<<endl;
+                    }else{
+                        if(opciones[bestOption].part_size>opciones[i].part_size){
+                            bestOption=i;
+        cout << "best fit changed to " + to_string(i)<<endl;
+                        }
+                    }
+                }else if(mbr.disk_fit=='W'){
+                    if(opciones[bestOption].part_size==-1){
+                        bestOption=i;
+        cout << "best fit is  " + to_string(i)<<endl;
+                    }else{
+                        if(opciones[bestOption].part_size<opciones[i].part_size){
+                            bestOption=i;
+        cout << "best fit changed to " + to_string(i)<<endl;
+                        }
+                    }
+                }else{//FIRST FIT
+                    bestOption=i;
+                    break;
+        cout << "best fit is  " + to_string(i)<<endl;
+                }
+            }
+        }
     }
+    if(bestOption==-1){
+        cout << "No se a podido crear la partición, ninguna tiene suficiente espacio."<<endl;
+    }
+    return bestOption+1; 
 }
-
 string _FDISK::toLowerCase(string cadena){
     string lowered="";
     for (char c : cadena){
