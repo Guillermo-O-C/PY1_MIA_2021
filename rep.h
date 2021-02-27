@@ -52,9 +52,8 @@ void _REP::graphMbr(){
     FILE *search =  fopen("/home/mis discos/Disco3.dk", "rb+");
     MBR mbr;
     fread(&mbr, sizeof(MBR), 1, search);
-    fclose(search);
     string diskName = "";
-    string graph = "digraph G {\nlabel = <<table><tr><td colspan=\"2\">MBR "+diskName+"</td></tr>";
+    string graph = "digraph G {\n node [ shape=box fontname=Helvetica ] mbr [label = <<table><tr><td colspan=\"2\">MBR "+diskName+"</td></tr>";
     graph=graph+"<tr><td>mbr_tamaño:</td><td>"+to_string(mbr.mbr_tamanio);
     string fecha = mbr.mbr_fecha_creacion;
     graph=graph+"</td></tr><tr><td>mbr_fecha_creacion:</td><td>"+fecha.substr(0,  fecha.length()-2);
@@ -84,40 +83,106 @@ void _REP::graphMbr(){
     graph=graph+"</td></tr><tr><td>part_fit_4:</td><td>"+mbr.mbr_partition_4.part_fit;
     graph=graph+"</td></tr><tr><td>part__start_4:</td><td>"+to_string(mbr.mbr_partition_4.part_start);
     graph=graph+"</td></tr><tr><td>part_size_4:</td><td>"+to_string(mbr.mbr_partition_4.part_size);
-    graph=graph+"</td></tr></table>>;\n}";
-    Print(graph, "MBR");
+    graph=graph+"</td></tr></table>>]";
+    if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type=='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type=='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type=='e' && mbr.mbr_partition_4.part_status=='1'){
+        partition extendida = (mbr.mbr_partition_1.part_type=='e')?mbr.mbr_partition_1:(mbr.mbr_partition_2.part_type=='e')?mbr.mbr_partition_2:(mbr.mbr_partition_3.part_type=='e')?mbr.mbr_partition_3:mbr.mbr_partition_4;
+        EBR ebr;
+        fseek(search, extendida.part_start, SEEK_SET);
+        fread(&ebr, sizeof(EBR), 1, search);
+        int i =1;
+        int lastStart=-2;
+        while(true){
+            cout << "this next is at "+to_string(ebr.part_next)<<endl;
+            lastStart=ebr.part_next;
+            graph=graph+"ebr"+to_string(i)+"[label=<<table>";
+            graph=graph+"<tr><td colspan=\"2\">EBR_"+to_string(i)+"</td></tr>";
+            graph=graph+"<tr><td>Nombre</td><td>Valor</td></tr>";
+            graph=graph+"<tr><td>part_status_"+to_string(i)+"</td><td>"+ebr.part_status+"</td></tr>";
+            graph=graph+"<tr><td>part_fit_"+to_string(i)+"</td><td>"+ebr.part_fit+"</td></tr>";
+            graph=graph+"<tr><td>part_size_"+to_string(i)+"</td><td>"+to_string(ebr.part_size)+"</td></tr>";
+            graph=graph+"<tr><td>part_start_"+to_string(i)+"</td><td>"+to_string(ebr.part_start)+"</td></tr>";
+            graph=graph+"<tr><td>part_next_"+to_string(i)+"</td><td>"+to_string(ebr.part_next)+"</td></tr>";
+            graph=graph+"<tr><td>part_name_"+to_string(i)+"</td><td>"+ebr.part_name+"</td></tr>";
+            graph=graph+"</table>>]";
+            if(ebr.part_next==-1){
+                break;
+            }
+            fseek(search, ebr.part_next, SEEK_SET);
+            fread(&ebr, sizeof(EBR), 1, search);
+            i++;
+        }
+    }    
+    Print(graph+"\n}", "MBR");
 }
 
 void _REP::graphDisk(){
     FILE *search =  fopen("/home/mis discos/Disco3.dk", "rb+");
     MBR mbr;
     fread(&mbr, sizeof(MBR), 1, search);
-    fclose(search);
-    string extended, graph = "digraph G {\nlabel = <<table><tr><td rowspan=\"2\">MBR</td>";
+    string extended="</tr><tr>", graph = "digraph G {\nlabel = <<table><tr><td rowspan=\"2\">MBR</td>";
     partition particiones[4] = {mbr.mbr_partition_1, mbr.mbr_partition_2, mbr.mbr_partition_3, mbr.mbr_partition_4};
+
+    //bubble sort
+    for(int i =0;i<4;i++){
+        for(int j=0;j<3;j++){
+            if(particiones[j].part_start>particiones[j+1].part_start){
+                partition temp = particiones[j];
+                particiones[j] = particiones[j+1];
+                particiones[j+1] = temp;
+            }
+        }
+    }
+
     for(int i =0;i<4;i++){
         if(particiones[i].part_size==0) continue;
-        cout << "Psize " <<to_string(particiones[i].part_size)<<endl;
         int porcentaje = particiones[i].part_size*100;
         porcentaje=porcentaje/mbr.mbr_tamanio;
-        cout << to_string(particiones[i].part_size)+" representa el "<<to_string(porcentaje)+ " del total "+to_string(mbr.mbr_tamanio)<<endl;
         if(particiones[i].part_status=='0'){
-            graph=graph+"<td colspan=\"2\">Libre "+to_string(porcentaje)+"%</td>";
+            graph=graph+"<td rowspan=\"2\">Libre <br/>"+to_string(porcentaje)+"%</td>";
         }else{
             if(particiones[i].part_type=='p'){
-                graph=graph+"<td >Primaria \n"+to_string(porcentaje)+"%</td>";
+                graph=graph+"<td rowspan=\"2\">Primaria <br/>"+to_string(porcentaje)+"%</td>";
             }else{//extendida
-                //los porcentajes se calculan sobre el porcentaje de la extendida
-                int colspan =0;//calcular el encabezado de la extendida
-                graph=graph+"<td >Extendida</td>";
-                extended="</tr><tr><td></td>";
+                int colspan =1;//calcular el encabezado de la extendida
+                EBR ebr;
+                fseek(search, particiones[i].part_start, SEEK_SET);
+                fread(&ebr, sizeof(EBR), 1, search);
+                while(true){
+                    colspan++;
+                    if(ebr.part_status=='1'){                            
+                        int porcentaje = ebr.part_size * 100;
+                        porcentaje=porcentaje/mbr.mbr_tamanio;
+                        extended = extended + "<td>EBR</td><td>Logica<br/>"+to_string(porcentaje)+"</td>";
+                    }else{
+                        if(ebr.part_start==particiones[i].part_start+sizeof(EBR)){//en caso de que el primer EBR esté dehabilitado
+                            int porcentaje = ebr.part_size*100;
+                            porcentaje=porcentaje/mbr.mbr_tamanio;
+                            extended = extended + "<td>EBR</td><td>Libre <br/>"+to_string(porcentaje)+"%</td>";
+                        }else{
+                            int porcentaje = ebr.part_size*100;
+                            porcentaje=porcentaje/mbr.mbr_tamanio;
+                            extended = extended + "<td>Libre <br/>"+to_string(porcentaje)+"%</td>";
+                        }
+                    }
+                    if(ebr.part_next==-1)break;
+                }
+                graph=graph+"<td colspan=\""+to_string(colspan)+"\">Extendida</td>";
+
+                fseek(search, particiones[i].part_start, SEEK_SET);
+                fread(&ebr, sizeof(EBR), 1, search);
+                while(true){
+                    if(ebr.part_next==-1)break;
+                    fseek(search, ebr.part_next, SEEK_SET);
+                    fread(&ebr, sizeof(EBR), 1, search);
+                }
             }
         }
     }
     int freeSpace =  mbr.mbr_tamanio-sizeof(MBR)-mbr.mbr_partition_1.part_size-mbr.mbr_partition_2.part_size-mbr.mbr_partition_3.part_size-mbr.mbr_partition_4.part_size;
-    if(freeSpace>0) graph=graph+"<td colspan=\"2\">Libre "+to_string((freeSpace*100)/mbr.mbr_tamanio)+"</td>";
-    graph=graph+extended+"</tr></table>>;}";
+    if(freeSpace>0) graph=graph+"<td rowspan=\"2\">Libre <br/>"+to_string((freeSpace*100)/mbr.mbr_tamanio)+"%</td>";
+    graph=(extended=="</tr><tr>")?graph+"</tr></table>>;}":graph+extended+"</tr></table>>;}";
     Print(graph, "DISK");
+    fclose(search);
 }
 
 void _REP::Print(string content, string name){

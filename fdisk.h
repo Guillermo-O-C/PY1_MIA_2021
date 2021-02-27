@@ -1,5 +1,7 @@
 #include <iostream>
 using namespace std;
+#include "ebr.h"
+
 
 class _FDISK{
     private:
@@ -33,6 +35,7 @@ class _FDISK{
     void exe();
     int choosePartition(MBR& mbr);
     string toLowerCase(string cadena);
+    int createLogicPartition(partition& particion);
 };
 
 void _FDISK::setSize(int size){
@@ -107,51 +110,32 @@ void _FDISK::exe(){
         MBR mbr;
         fread(&mbr, sizeof(MBR), 1, search);
 
-        if(mbr.mbr_partition_1.part_name==this->name && mbr.mbr_partition_1.part_status=='1' ||  mbr.mbr_partition_2.part_name==this->name && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_name==this->name && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_name==this->name && mbr.mbr_partition_4.part_status=='1'){
-            cout << "ERROR: Nombre repetido de particiones en este disco."<<endl;
-            return;
-        } 
+        if(this->type!="l"){
+            if(mbr.mbr_partition_1.part_name==this->name && mbr.mbr_partition_1.part_status=='1' ||  mbr.mbr_partition_2.part_name==this->name && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_name==this->name && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_name==this->name && mbr.mbr_partition_4.part_status=='1'){
+                cout << "ERROR: Nombre repetido de particiones en este disco."<<endl;
+                return;
+            } 
+        }
 
-        //calcular con el size, y el fit el byte de inicio.
         int freeSpace =  mbr.mbr_tamanio-sizeof(MBR)-mbr.mbr_partition_1.part_size-mbr.mbr_partition_2.part_size-mbr.mbr_partition_3.part_size-mbr.mbr_partition_4.part_size;
 
-        if(this->type=="p"){
+        if(this->type=="p" || this->type=="e"){
+            if(this->type=="e"){
+                if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type=='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type=='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type=='e' && mbr.mbr_partition_4.part_status=='1'){
+                    cout << "ERROR: Ya existe una partición extendida en este disco.";
+                    return;
+                }
+            }
             if(mbr.mbr_partition_1.part_status=='0' || mbr.mbr_partition_2.part_status=='0' || mbr.mbr_partition_3.part_status=='0' || mbr.mbr_partition_4.part_status=='0'){
                 int option = choosePartition(mbr);
+                if(option==-1) return;
                 partition * bestOption = (option==1)?&mbr.mbr_partition_1: (option==2)?&mbr.mbr_partition_2:(option==3)?&mbr.mbr_partition_3:&mbr.mbr_partition_4;
-                if(bestOption->part_size==-1) return;
                 if(bestOption->part_size==0 && (this->size>freeSpace)){
                     cout<< "ERROR: No hay suficiente espacio para crear la particion, solo hay "+to_string(freeSpace)+" bytes."<<endl; ;
                     return;
                 }
                 if(bestOption->part_size==0){
-                    int start =  sizeof(MBR)+mbr.mbr_partition_1.part_size+mbr.mbr_partition_2.part_size+mbr.mbr_partition_3.part_size+mbr.mbr_partition_4.part_size;
-                    bestOption->part_start=start;
-                    cout << "the start byte will be "+to_string(start)<<endl;
-                }
-                bestOption->part_fit=this->f.c_str()[0]; 
-                strcpy(bestOption->part_name,this->name.c_str());
-                bestOption->part_size=this->size;
-                bestOption->part_type=this->type.c_str()[0];
-                bestOption->part_status='1';
-            }else{
-                cout << "ERROR:No se ha creado la partición en el disco indicado ya que ya hay 4 particiones en existencia."<<endl;
-                return;
-            }
-        }
-        else if(this->type=="e"){
-            if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type!='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type!='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type!='e' && mbr.mbr_partition_4.part_status=='1'){
-                cout << "ERROR: Ya existe una partición extendida en este disco.";
-            }else if(mbr.mbr_partition_1.part_status=='0' || mbr.mbr_partition_2.part_status=='0' || mbr.mbr_partition_3.part_status=='0' || mbr.mbr_partition_4.part_status=='0'){
-                int option = choosePartition(mbr);
-                partition * bestOption = (option==1)?&mbr.mbr_partition_1: (option==2)?&mbr.mbr_partition_2:(option==3)?&mbr.mbr_partition_3:&mbr.mbr_partition_4;
-                if(bestOption->part_size==-1) return;
-                if(bestOption->part_size==0 && (this->size>freeSpace)){
-                    cout<< "ERROR: No hay suficiente espacio para crear la particion, solo hay "+to_string(freeSpace)+" bytes."<<endl; ;
-                    return;
-                }
-                if(bestOption->part_size==0){
-                    int start =  sizeof(MBR)+mbr.mbr_partition_1.part_size+mbr.mbr_partition_2.part_size+mbr.mbr_partition_3.part_size+mbr.mbr_partition_4.part_size;
+                    int start = sizeof(MBR)+mbr.mbr_partition_1.part_size+mbr.mbr_partition_2.part_size+mbr.mbr_partition_3.part_size+mbr.mbr_partition_4.part_size;
                     bestOption->part_start=start;
                 }
                 bestOption->part_fit=this->f.c_str()[0]; 
@@ -159,6 +143,14 @@ void _FDISK::exe(){
                 bestOption->part_size=this->size;
                 bestOption->part_type=this->type.c_str()[0];
                 bestOption->part_status='1';
+                if(this->type=="e"){
+                    EBR ebr;
+                    ebr.part_start=bestOption->part_start+sizeof(EBR);
+                    fseek(search, bestOption->part_start, SEEK_SET);
+                    fwrite(&ebr, sizeof(EBR), 1, search);
+                    fflush(search);
+                    rewind(search);
+                }
             }else{
                 cout << "ERROR:No se ha creado la partición en el disco indicado ya que ya hay 4 particiones en existencia."<<endl;
                 return;
@@ -166,48 +158,131 @@ void _FDISK::exe(){
         }
         else{
             if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type!='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type!='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type!='e' && mbr.mbr_partition_4.part_status=='1'){
-                cout << "ERROR: No se puede crear la partición lógica porque no existe una partición extendida en este disco.";
+                partition extendida = (mbr.mbr_partition_1.part_type=='e')?mbr.mbr_partition_1:(mbr.mbr_partition_2.part_type=='e')?mbr.mbr_partition_2:(mbr.mbr_partition_3.part_type=='e')?mbr.mbr_partition_3:mbr.mbr_partition_4;
+                EBR ebr, bestOption;
+                fseek(search, extendida.part_start, SEEK_SET);
+                fread(&ebr, sizeof(EBR), 1, search);
+                cout << to_string(ebr.part_start)<<endl;
+                bestOption=ebr;
+                int lastStart;
+                while(lastStart<ebr.part_next){
+                    lastStart=ebr.part_next;
+                    cout << "primer while"<<endl;
+                    if(ebr.part_status=='0'){
+                        cout << "ebr in " + to_string(ebr.part_start)+" is ok"<<endl;
+                        if(extendida.part_type=='b'){
+                            if(bestOption.part_size>ebr.part_size){
+                                bestOption=ebr;
+                            }
+                        }else if(extendida.part_type=='w'){
+                            if(bestOption.part_size<ebr.part_size){
+                                bestOption=ebr;
+                            }
+                        }else{
+                            if(bestOption.part_size<=ebr.part_size){
+                                bestOption=ebr;    
+                            }
+                        }  
+                    }
+                    cout << "ebr next " + to_string(ebr.part_next)<<endl;
+                    fseek(search, ebr.part_next, SEEK_SET);
+                    fread(&ebr, sizeof(EBR), 1, search);
+                }
+                if(bestOption.part_start==extendida.part_start+sizeof(EBR) && bestOption.part_status=='0'){
+                    cout << "if"<<endl;
+                    //es el primer ebr de la extendida
+                    bestOption.part_fit=this->f.c_str()[0];
+                    bestOption.part_size=this->size;
+                    bestOption.part_status='1';
+                    bestOption.part_next=-1;
+                    strcpy(bestOption.part_name,this->name.c_str());
+                    fseek(search,bestOption.part_start-sizeof(EBR), SEEK_SET);
+                    fwrite(&bestOption, sizeof(EBR), 1, search);
+                }else if(bestOption.part_status=='1'/* && bestOption.part_size<this->size*/){
+                    cout << "else if"<<endl;
+                    //no consiguio un fit
+                    EBR lastEBR;
+                    fseek(search, extendida.part_start, SEEK_SET);
+                    fread(&lastEBR, sizeof(EBR), 1, search);
+                    int lastStart=-2;
+                    while(lastStart<lastEBR.part_next){
+                        lastStart=lastEBR.part_next;
+                        cout << "next lbr is at "+to_string(lastEBR.part_next)<<endl;
+                        if(lastEBR.part_next==-1){
+                            break;
+                        }
+                        fseek(search, lastEBR.part_next, SEEK_SET);
+                        fread(&lastEBR, sizeof(EBR), 1, search);
+                    }
+                    cout << "el último LBR es "<<lastEBR.part_name<<endl;
+                    EBR nuevoEBR;
+                    nuevoEBR.part_start=lastEBR.part_start+lastEBR.part_size;//incluye el espacio del ebr del nuevo
+                    nuevoEBR.part_fit=this->f.c_str()[0]; 
+                    strcpy(nuevoEBR.part_name,this->name.c_str());
+                    nuevoEBR.part_size=this->size;
+                    nuevoEBR.part_status='1';
+                    nuevoEBR.part_next=-1;
+
+                    lastEBR.part_next=nuevoEBR.part_start-sizeof(EBR);
+                    fseek(search,lastEBR.part_start-sizeof(EBR), SEEK_SET);
+                    fwrite(&lastEBR, sizeof(EBR), 1, search);
+                    fflush(search);
+                    fseek(search,nuevoEBR.part_start-sizeof(EBR), SEEK_SET);
+                    fwrite(&nuevoEBR, sizeof(EBR), 1, search);
+                    fflush(search);
+                }else{
+                    cout << "else"<<endl;
+                    bestOption.part_fit=this->f.c_str()[0]; 
+                    strcpy(bestOption.part_name,this->name.c_str());
+                    bestOption.part_status='1';
+                    fseek(search,bestOption.part_start-sizeof(EBR), SEEK_SET);
+                    fwrite(&bestOption, sizeof(EBR), 1, search);
+                }
+                fflush(search);
             }
         }
         fclose(search);
-        FILE *f = fopen(this->path.c_str(), "wb+");
+        FILE *f = fopen(this->path.c_str(), "rb+");
         fwrite(&mbr, sizeof(MBR), 1, f);
         fflush(f);
         fclose(f);
+        
         cout <<"La partición ha sido creada exitosamente."<<endl;
     }
 }
 int _FDISK::choosePartition(MBR& mbr){
     int bestOption=-1;//indicar que el objeto nunca ha sido asignado
     partition opciones[4] = {mbr.mbr_partition_1, mbr.mbr_partition_2, mbr.mbr_partition_3,mbr.mbr_partition_4};
+    opciones[2].part_size=this->size;
+    opciones[3].part_size=this->size+100;
     for(int i =0;i<4;i++){
-        cout << "probando la particion " + to_string(i)<<endl;
+        //cout << "probando la particion " + to_string(i)<<endl;
         if(opciones[i].part_status=='0'){
             if(opciones[i].part_size==0 || opciones[i].part_size>=this->size){//es una nueva o es una con suficiente espacio
                 if(mbr.disk_fit=='B'){
                     if(bestOption==-1){
                         bestOption=i;
-        cout << "best fit is  " + to_string(i)<<endl;
+                        //cout << "best fit is  " + to_string(i)<<endl;
                     }else{
                         if(opciones[bestOption].part_size>opciones[i].part_size){
                             bestOption=i;
-        cout << "best fit changed to " + to_string(i)<<endl;
+                            //cout << "best fit changed to " + to_string(i)<<endl;
                         }
                     }
                 }else if(mbr.disk_fit=='W'){
-                    if(opciones[bestOption].part_size==-1){
+                    if(bestOption==-1){
                         bestOption=i;
-        cout << "best fit is  " + to_string(i)<<endl;
+                        //cout << "worst fit is  " + to_string(i)<<endl;
                     }else{
                         if(opciones[bestOption].part_size<opciones[i].part_size){
                             bestOption=i;
-        cout << "best fit changed to " + to_string(i)<<endl;
+                            //cout << "worst fit changed to " + to_string(i)<<endl;
                         }
                     }
                 }else{//FIRST FIT
                     bestOption=i;
                     break;
-        cout << "best fit is  " + to_string(i)<<endl;
+                    //cout << "first fit is  " + to_string(i)<<endl;
                 }
             }
         }
@@ -217,6 +292,46 @@ int _FDISK::choosePartition(MBR& mbr){
         bestOption=-2;
     }
     return bestOption+1; 
+}
+int _FDISK::createLogicPartition(partition& particion){
+    FILE * logic = fopen(this->path.c_str(), "rb+");
+    EBR ebr, bestOption;
+    cout << "1st ebr will seek in "+to_string(particion.part_start)<<endl;
+    fseek(logic, particion.part_start, SEEK_SET);
+    fread(&ebr, sizeof(EBR), 1, logic);
+    while(true){
+        if(ebr.part_status=='0'){
+            if(ebr.part_size==0 || ebr.part_size>=this->size){//es una nueva o es una con suficiente espacio
+                if(particion.part_fit=='B'){
+                    if(bestOption.part_start==-1){
+                        bestOption=ebr;
+                    }else{
+                        if(bestOption.part_size>ebr.part_size){
+                            bestOption=ebr;
+                        }
+                    }
+                }else if(particion.part_fit=='W'){
+                    if(bestOption.part_start==-1){
+                        bestOption=ebr;
+                        //cout << "worst fit is  " + to_string(i)<<endl;
+                    }else{
+                        if(bestOption.part_size<ebr.part_size){
+                            bestOption=ebr;
+                            //cout << "worst fit changed to " + to_string(i)<<endl;
+                        }
+                    }
+                }else{//FIRST FIT
+                    bestOption=ebr;
+                    break;
+                    //cout << "first fit is  " + to_string(i)<<endl;
+                }
+            }
+        }
+        if(ebr.part_next==-1)break;
+        fseek(logic, ebr.part_next, SEEK_SET);
+        fread(&ebr, sizeof(EBR), 1, logic);
+    }
+    return bestOption.part_start;
 }
 string _FDISK::toLowerCase(string cadena){
     string lowered="";
