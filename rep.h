@@ -90,10 +90,8 @@ void _REP::graphMbr(){
         fseek(search, extendida.part_start, SEEK_SET);
         fread(&ebr, sizeof(EBR), 1, search);
         int i =1;
-        int lastStart=-2;
         while(true){
             cout << "this next is at "+to_string(ebr.part_next)<<endl;
-            lastStart=ebr.part_next;
             graph=graph+"ebr"+to_string(i)+"[label=<<table>";
             graph=graph+"<tr><td colspan=\"2\">EBR_"+to_string(i)+"</td></tr>";
             graph=graph+"<tr><td>Nombre</td><td>Valor</td></tr>";
@@ -147,34 +145,39 @@ void _REP::graphDisk(){
                 EBR ebr;
                 fseek(search, particiones[i].part_start, SEEK_SET);
                 fread(&ebr, sizeof(EBR), 1, search);
-                while(true){
+                while(ebr.part_next!=-1){
+                    cout << "inside while"+to_string(ebr.part_next)<<endl;
                     colspan++;
                     if(ebr.part_status=='1'){                            
                         int porcentaje = ebr.part_size * 100;
                         porcentaje=porcentaje/mbr.mbr_tamanio;
-                        extended = extended + "<td>EBR</td><td>Logica<br/>"+to_string(porcentaje)+"</td>";
+                        colspan++;
+                        extended = extended + "<td>EBR</td><td>Logica<br/>"+to_string(porcentaje)+"%</td>";
                     }else{
                         if(ebr.part_start==particiones[i].part_start+sizeof(EBR)){//en caso de que el primer EBR esté dehabilitado
                             int porcentaje = ebr.part_size*100;
                             porcentaje=porcentaje/mbr.mbr_tamanio;
+                            colspan++;
                             extended = extended + "<td>EBR</td><td>Libre <br/>"+to_string(porcentaje)+"%</td>";
-                        }else{
+                        }
+                        else{
                             int porcentaje = ebr.part_size*100;
                             porcentaje=porcentaje/mbr.mbr_tamanio;
                             extended = extended + "<td>Libre <br/>"+to_string(porcentaje)+"%</td>";
                         }
                     }
-                    if(ebr.part_next==-1)break;
-                }
-                graph=graph+"<td colspan=\""+to_string(colspan)+"\">Extendida</td>";
-
-                fseek(search, particiones[i].part_start, SEEK_SET);
-                fread(&ebr, sizeof(EBR), 1, search);
-                while(true){
-                    if(ebr.part_next==-1)break;
                     fseek(search, ebr.part_next, SEEK_SET);
                     fread(&ebr, sizeof(EBR), 1, search);
                 }
+                if(ebr.part_start-sizeof(EBR)+ebr.part_size!=particiones[i].part_start-sizeof(MBR)+particiones[i].part_size){
+                    int freeSpace = particiones[i].part_start-sizeof(MBR)+particiones[i].part_size-ebr.part_start-sizeof(EBR)+ebr.part_size;
+                    int porcentaje = freeSpace * 100;
+                    porcentaje=porcentaje/mbr.mbr_tamanio;
+                    colspan++;
+                    extended = extended + "<td>Libre <br/>"+to_string(porcentaje)+"%</td>";
+
+                }
+                graph=graph+"<td colspan=\""+to_string(colspan)+"\">Extendida</td>";
             }
         }
     }
