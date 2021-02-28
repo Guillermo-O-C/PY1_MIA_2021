@@ -145,8 +145,7 @@ void _REP::graphDisk(){
                 EBR ebr;
                 fseek(search, particiones[i].part_start, SEEK_SET);
                 fread(&ebr, sizeof(EBR), 1, search);
-                while(ebr.part_next!=-1){
-                    cout << "inside while"+to_string(ebr.part_next)<<endl;
+                while(true){
                     colspan++;
                     if(ebr.part_status=='1'){                            
                         int porcentaje = ebr.part_size * 100;
@@ -165,6 +164,9 @@ void _REP::graphDisk(){
                             porcentaje=porcentaje/mbr.mbr_tamanio;
                             extended = extended + "<td>Libre <br/>"+to_string(porcentaje)+"%</td>";
                         }
+                    }
+                    if(ebr.part_next==-1){
+                        break;
                     }
                     fseek(search, ebr.part_next, SEEK_SET);
                     fread(&ebr, sizeof(EBR), 1, search);

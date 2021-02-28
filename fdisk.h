@@ -34,8 +34,10 @@ class _FDISK{
     void setAdd(int add);
     void exe();
     int choosePartition(MBR& mbr);
-    string toLowerCase(string cadena);
     int createLogicPartition(partition& particion);
+    string toLowerCase(string cadena);
+    void deletePartition();
+    string toString(char * name);
 };
 
 void _FDISK::setSize(int size){
@@ -75,9 +77,9 @@ void _FDISK::exe(){
     if(this->delete_!="" && this->add!=0){
         cout <<"ERROR: Parámetros incompatibles, llamado a delete y add. "<<endl;
     }
-    if(this->delete_=="") this->delete_="fast";
+    //if(this->delete_=="") this->delete_="fast";
 
-    if(this->size<=0){
+    if(this->size<=0 && this->delete_=="" && this->add==0){
         cout<<"ERROR:no se puede crear un disco con el tamaño " << this->size <<endl;
     }else if(this->path==""){
         cout<<"ERROR:el parámetro PATH es obligatorio."<<endl;
@@ -87,11 +89,16 @@ void _FDISK::exe(){
         cout<<"ERROR:no existe la unidad de datos "<<this->u<<endl;
     }else if(this->f!="bf" && this->f!="ff" && this->f!="wf"){
         cout<<"ERROR:no existe el fit "<<this->f<<endl;
-    }else if(this->delete_!="fast" && this->delete_!="full"){
+    }/*else if(this->delete_!="fast" && this->delete_!="full"){
         cout<<"ERROR:el parametro delete no acepta el valor "<<this->delete_<<endl; 
-    }else if(this->name==""){
+    }*/else if(this->name==""){
         cout<<"ERROR:el parámetro NAME es obligatorio."<<endl;
     }else{
+        if(this->delete_!=""){
+            deletePartition();
+            return;
+        }
+
         if(this->u=="k"){
             this->size=this->size*1024;
         }
@@ -109,13 +116,30 @@ void _FDISK::exe(){
         FILE *search =  fopen(this->path.c_str(), "rb+");
         MBR mbr;
         fread(&mbr, sizeof(MBR), 1, search);
-
-        if(this->type!="l"){
-            if(mbr.mbr_partition_1.part_name==this->name && mbr.mbr_partition_1.part_status=='1' ||  mbr.mbr_partition_2.part_name==this->name && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_name==this->name && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_name==this->name && mbr.mbr_partition_4.part_status=='1'){
-                cout << "ERROR: Nombre repetido de particiones en este disco."<<endl;
-                return;
-            } 
-        }
+        
+        if(mbr.mbr_partition_1.part_name==this->name && mbr.mbr_partition_1.part_status=='1' ||  mbr.mbr_partition_2.part_name==this->name && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_name==this->name && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_name==this->name && mbr.mbr_partition_4.part_status=='1'){
+            cout << "ERROR: Nombre repetido de particiones en este disco."<<endl;
+            return;
+        }else if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type=='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type=='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type=='e' && mbr.mbr_partition_4.part_status=='1'){
+            partition extendida = (mbr.mbr_partition_1.part_type=='e')?mbr.mbr_partition_1:(mbr.mbr_partition_2.part_type=='e')?mbr.mbr_partition_2:(mbr.mbr_partition_3.part_type=='e')?mbr.mbr_partition_3:mbr.mbr_partition_4;
+            EBR ebr;
+            fseek(search, extendida.part_start, SEEK_SET);
+            fread(&ebr, sizeof(EBR), 1, search);
+            int i =1;
+            while(true){
+                if(this->name==toString(ebr.part_name)){
+                    //logic partition found, delete
+                    cout << "ERROR: Nombre repetido de particiones lógicas en este disco."<<endl;
+                    return;
+                }
+                if(ebr.part_next==-1){
+                    break;
+                }
+                fseek(search, ebr.part_next, SEEK_SET);
+                fread(&ebr, sizeof(EBR), 1, search);
+                i++;
+            }
+        } 
 
         int freeSpace =  mbr.mbr_tamanio-sizeof(MBR)-mbr.mbr_partition_1.part_size-mbr.mbr_partition_2.part_size-mbr.mbr_partition_3.part_size-mbr.mbr_partition_4.part_size;
 
@@ -207,14 +231,12 @@ void _FDISK::exe(){
                     int lastStart=-2;
                     while(lastStart<lastEBR.part_next){
                         lastStart=lastEBR.part_next;
-                        cout << "next lbr is at "+to_string(lastEBR.part_next)<<endl;
                         if(lastEBR.part_next==-1){
                             break;
                         }
                         fseek(search, lastEBR.part_next, SEEK_SET);
                         fread(&lastEBR, sizeof(EBR), 1, search);
                     }
-                    cout << "el último LBR es "<<lastEBR.part_name<<endl;
                     EBR nuevoEBR;
                     nuevoEBR.part_start=lastEBR.part_start+lastEBR.part_size;//incluye el espacio del ebr del nuevo
                     nuevoEBR.part_fit=this->f.c_str()[0]; 
@@ -343,4 +365,100 @@ string _FDISK::toLowerCase(string cadena){
         }
     }
     return lowered;
+}
+string _FDISK::toString(char * name){
+    string str;
+    for(int i=0;i < 16;i++){
+        if(name[i]==int(NULL)) break;
+        str=str+name[i];
+    }
+    return str;
+}
+void _FDISK::deletePartition(){
+    if(this->delete_!="fast" && this->delete_!="full"){
+        cout<<"ERROR:el parametro delete no acepta el valor "<<this->delete_<<endl; 
+        return;
+    }
+    FILE *search =  fopen(this->path.c_str(), "rb+");
+    MBR mbr;
+    fread(&mbr, sizeof(MBR), 1, search);
+    partition opciones[4] = {mbr.mbr_partition_1, mbr.mbr_partition_2, mbr.mbr_partition_3,mbr.mbr_partition_4};
+    for(int i =0;i<4;i++){
+        if(opciones[i].part_status=='1'){
+            if(this->name==toString(opciones[i].part_name)){
+                cout << "Se borrará la partición "+this->name+" del siguiente path:\n"<<this->path<<"\n ¿Estás seguro de eliminar el disco? S/n"<<endl;
+                string answer;
+                getline(cin, answer);
+                if(toLowerCase(answer)=="s"){
+                    if(this->delete_=="fast"){
+                        (opciones[i].part_start==mbr.mbr_partition_1.part_start)?mbr.mbr_partition_1.part_status='0':(opciones[i].part_start==mbr.mbr_partition_2.part_start)?mbr.mbr_partition_2.part_status='0':(opciones[i].part_start==mbr.mbr_partition_3.part_start)?mbr.mbr_partition_3.part_status='0':mbr.mbr_partition_4.part_status='0';
+                        //opciones[i].part_status='0';
+                        fseek(search, 0, SEEK_SET);
+                        fwrite(&mbr, sizeof(MBR), 1, search);
+                        fflush(search);
+                    }else{
+                        (opciones[i].part_start==mbr.mbr_partition_1.part_start)?mbr.mbr_partition_1.part_status='0':(opciones[i].part_start==mbr.mbr_partition_2.part_start)?mbr.mbr_partition_2.part_status='0':(opciones[i].part_start==mbr.mbr_partition_3.part_start)?mbr.mbr_partition_3.part_status='0':mbr.mbr_partition_4.part_status='0';
+                        //opciones[i].part_status='0';
+                        fseek(search, 0, SEEK_SET);
+                        fwrite(&mbr, sizeof(MBR), 1, search);
+                        fflush(search);
+                        cout << "Eliminando toda la partición, esto podría tomar un poco de tiempo."<<endl;
+                        for(int i =opciones[i].part_start; i<opciones[i].part_start+opciones[i].part_size; i++){
+                            fseek(search, i,SEEK_SET);
+                            fwrite("\0", 1, 1, search);
+                            fflush(search);
+                        }
+                    }
+                    cout << "Se ha elimidado la partición "+toString(opciones[i].part_name)<<endl;
+                }else{
+                    cout << "No se ha eliminado la partición."<<endl;
+                }
+                return;
+            } 
+        }        
+    }
+    if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type=='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type=='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type=='e' && mbr.mbr_partition_4.part_status=='1'){
+        partition extendida = (mbr.mbr_partition_1.part_type=='e')?mbr.mbr_partition_1:(mbr.mbr_partition_2.part_type=='e')?mbr.mbr_partition_2:(mbr.mbr_partition_3.part_type=='e')?mbr.mbr_partition_3:mbr.mbr_partition_4;
+        EBR ebr;
+        fseek(search, extendida.part_start, SEEK_SET);
+        fread(&ebr, sizeof(EBR), 1, search);
+        int i =1;
+        while(true){
+            if(this->name==toString(ebr.part_name)){
+                //logic partition found, delete
+               cout << "Se borrará la partición "+this->name+" del siguiente path:\n"<<this->path<<"\n ¿Estás seguro de eliminar el disco? S/n"<<endl;
+                string answer;
+                getline(cin, answer);
+                if(toLowerCase(answer)=="s"){
+                    if(this->delete_=="fast"){
+                        ebr.part_status='0';
+                        fseek(search, ebr.part_start-sizeof(EBR),SEEK_SET);
+                        fwrite(&ebr, sizeof(EBR), 1, search);
+                        fflush(search);
+                    }else{
+                        ebr.part_status='0';
+                        fseek(search, ebr.part_start-sizeof(EBR),SEEK_SET);
+                        fwrite(&ebr, sizeof(EBR), 1, search);
+                        fflush(search);
+                        cout << "Eliminando toda la partición, esto podría tomar un poco de tiempo."<<endl;
+                        for(int i =ebr.part_start; i<ebr.part_start+opciones[i].part_size-sizeof(EBR); i++){
+                            fseek(search, i ,SEEK_SET);
+                            fwrite("\0", 1, 1, search);
+                            fflush(search);
+                        }
+                    }
+                    cout << "Se ha elimidado la partición "+toString(ebr.part_name)<<endl;
+                }else{
+                    cout << "No se ha eliminado la partición."<<endl;
+                }
+                return;
+            }
+            if(ebr.part_next==-1){
+                break;
+            }
+            fseek(search, ebr.part_next, SEEK_SET);
+            fread(&ebr, sizeof(EBR), 1, search);
+            i++;
+        }
+    } 
 }
