@@ -392,21 +392,21 @@ void _FDISK::deletePartition(){
                 if(toLowerCase(answer)=="s"){
                     if(this->delete_=="fast"){
                         (opciones[i].part_start==mbr.mbr_partition_1.part_start)?mbr.mbr_partition_1.part_status='0':(opciones[i].part_start==mbr.mbr_partition_2.part_start)?mbr.mbr_partition_2.part_status='0':(opciones[i].part_start==mbr.mbr_partition_3.part_start)?mbr.mbr_partition_3.part_status='0':mbr.mbr_partition_4.part_status='0';
-                        //opciones[i].part_status='0';
                         fseek(search, 0, SEEK_SET);
                         fwrite(&mbr, sizeof(MBR), 1, search);
                         fflush(search);
                     }else{
                         (opciones[i].part_start==mbr.mbr_partition_1.part_start)?mbr.mbr_partition_1.part_status='0':(opciones[i].part_start==mbr.mbr_partition_2.part_start)?mbr.mbr_partition_2.part_status='0':(opciones[i].part_start==mbr.mbr_partition_3.part_start)?mbr.mbr_partition_3.part_status='0':mbr.mbr_partition_4.part_status='0';
-                        //opciones[i].part_status='0';
                         fseek(search, 0, SEEK_SET);
                         fwrite(&mbr, sizeof(MBR), 1, search);
                         fflush(search);
                         cout << "Eliminando toda la partición, esto podría tomar un poco de tiempo."<<endl;
-                        for(int i =opciones[i].part_start; i<opciones[i].part_start+opciones[i].part_size; i++){
-                            fseek(search, i,SEEK_SET);
+                        cout << "se eliminada desde "+to_string(opciones[i].part_start)+" hasta "+to_string(opciones[i].part_start+opciones[i].part_size)<<endl;
+                        for(int e =opciones[i].part_start; e<opciones[i].part_start+opciones[i].part_size; e++){
+                            cout << "eliminando byte "+to_string(e)<<endl;
+                            fseek(search, e,SEEK_SET);
                             fwrite("\0", 1, 1, search);
-                            fflush(search);
+                            fflush(search);                           
                         }
                     }
                     cout << "Se ha elimidado la partición "+toString(opciones[i].part_name)<<endl;
@@ -440,12 +440,15 @@ void _FDISK::deletePartition(){
                         fseek(search, ebr.part_start-sizeof(EBR),SEEK_SET);
                         fwrite(&ebr, sizeof(EBR), 1, search);
                         fflush(search);
-                        cout << "Eliminando toda la partición, esto podría tomar un poco de tiempo."<<endl;
-                        for(int i =ebr.part_start; i<ebr.part_start+opciones[i].part_size-sizeof(EBR); i++){
-                            fseek(search, i ,SEEK_SET);
+                        cout << "Eliminando toda la partición, esto podría tomar un poco de tiempo."+to_string(ebr.part_start+ebr.part_size-sizeof(EBR))<<endl;
+                        cout << "se eliminada desde "+to_string(ebr.part_start)+" hasta "+to_string(ebr.part_start+ebr.part_size-sizeof(EBR))<<endl;
+                        for(int e =ebr.part_start; e<ebr.part_start+ebr.part_size-sizeof(EBR); e++){
+                            fseek(search, e ,SEEK_SET);
                             fwrite("\0", 1, 1, search);
                             fflush(search);
+                            cout << "eliminando byte "+to_string(e)<<endl;
                         }
+                        cout << "particion eliminada";
                     }
                     cout << "Se ha elimidado la partición "+toString(ebr.part_name)<<endl;
                 }else{
