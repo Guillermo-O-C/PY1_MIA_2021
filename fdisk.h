@@ -36,8 +36,9 @@ class _FDISK{
     int choosePartition(MBR& mbr);
     int createLogicPartition(partition& particion);
     string toLowerCase(string cadena);
-    void deletePartition();
     string toString(char * name);
+    void deletePartition();
+    void addPartition();
 };
 
 void _FDISK::setSize(int size){
@@ -77,10 +78,10 @@ void _FDISK::exe(){
     if(this->delete_!="" && this->add!=0){
         cout <<"ERROR: Parámetros incompatibles, llamado a delete y add. "<<endl;
     }
-    //if(this->delete_=="") this->delete_="fast";
-
     if(this->size<=0 && this->delete_=="" && this->add==0){
         cout<<"ERROR:no se puede crear un disco con el tamaño " << this->size <<endl;
+    }else if(this->size>0 && this->delete_!="" || this->size>0 && this->add!=0){
+        cout<<"ERROR:muchas operaciones al mismo tiempo"<<endl;
     }else if(this->path==""){
         cout<<"ERROR:el parámetro PATH es obligatorio."<<endl;
     }else if(this->type!="p" && this->type!="e" && this->type!="l"){
@@ -89,13 +90,15 @@ void _FDISK::exe(){
         cout<<"ERROR:no existe la unidad de datos "<<this->u<<endl;
     }else if(this->f!="bf" && this->f!="ff" && this->f!="wf"){
         cout<<"ERROR:no existe el fit "<<this->f<<endl;
-    }/*else if(this->delete_!="fast" && this->delete_!="full"){
-        cout<<"ERROR:el parametro delete no acepta el valor "<<this->delete_<<endl; 
-    }*/else if(this->name==""){
+    }else if(this->name==""){
         cout<<"ERROR:el parámetro NAME es obligatorio."<<endl;
     }else{
         if(this->delete_!=""){
             deletePartition();
+            return;
+        }
+        if(this->add!=0){
+            addPartition();
             return;
         }
 
@@ -401,9 +404,9 @@ void _FDISK::deletePartition(){
                         fwrite(&mbr, sizeof(MBR), 1, search);
                         fflush(search);
                         cout << "Eliminando toda la partición, esto podría tomar un poco de tiempo."<<endl;
-                        cout << "se eliminada desde "+to_string(opciones[i].part_start)+" hasta "+to_string(opciones[i].part_start+opciones[i].part_size)<<endl;
+                        //cout << "se eliminada desde "+to_string(opciones[i].part_start)+" hasta "+to_string(opciones[i].part_start+opciones[i].part_size)<<endl;
                         for(int e =opciones[i].part_start; e<opciones[i].part_start+opciones[i].part_size; e++){
-                            cout << "eliminando byte "+to_string(e)<<endl;
+                            //cout << "eliminando byte "+to_string(e)<<endl;
                             fseek(search, e,SEEK_SET);
                             fwrite("\0", 1, 1, search);
                             fflush(search);                           
@@ -422,7 +425,6 @@ void _FDISK::deletePartition(){
         EBR ebr;
         fseek(search, extendida.part_start, SEEK_SET);
         fread(&ebr, sizeof(EBR), 1, search);
-        int i =1;
         while(true){
             if(this->name==toString(ebr.part_name)){
                 //logic partition found, delete
@@ -441,12 +443,12 @@ void _FDISK::deletePartition(){
                         fwrite(&ebr, sizeof(EBR), 1, search);
                         fflush(search);
                         cout << "Eliminando toda la partición, esto podría tomar un poco de tiempo."+to_string(ebr.part_start+ebr.part_size-sizeof(EBR))<<endl;
-                        cout << "se eliminada desde "+to_string(ebr.part_start)+" hasta "+to_string(ebr.part_start+ebr.part_size-sizeof(EBR))<<endl;
+                        //cout << "se eliminada desde "+to_string(ebr.part_start)+" hasta "+to_string(ebr.part_start+ebr.part_size-sizeof(EBR))<<endl;
                         for(int e =ebr.part_start; e<ebr.part_start+ebr.part_size-sizeof(EBR); e++){
                             fseek(search, e ,SEEK_SET);
                             fwrite("\0", 1, 1, search);
                             fflush(search);
-                            cout << "eliminando byte "+to_string(e)<<endl;
+                            //cout << "eliminando byte "+to_string(e)<<endl;
                         }
                         cout << "particion eliminada";
                     }
@@ -461,7 +463,155 @@ void _FDISK::deletePartition(){
             }
             fseek(search, ebr.part_next, SEEK_SET);
             fread(&ebr, sizeof(EBR), 1, search);
-            i++;
         }
-    } 
+    }
+    cout << "ERROR: No se ha encontrado la partición "+this->name<<endl;   
+}
+void _FDISK::addPartition(){
+    FILE *search =  fopen(this->path.c_str(), "rb+");
+    MBR mbr;
+    fread(&mbr, sizeof(MBR), 1, search);
+    partition opciones[4] = {mbr.mbr_partition_1, mbr.mbr_partition_2, mbr.mbr_partition_3, mbr.mbr_partition_4};
+    
+    if(this->u=="k"){
+            this->add=this->add*1024;
+        }
+    else if(this->u=="m"){
+            this->add=this->add*1024*1024;
+        }
+    
+    //bubble sort
+    for(int i =0;i<4;i++){
+        for(int j=0;j<3;j++){
+            if(opciones[j].part_start>opciones[j+1].part_start){
+                partition temp = opciones[j];
+                opciones[j] = opciones[j+1];
+                opciones[j+1] = temp;
+            }
+        }
+    }
+
+    for(int i =0;i<4;i++){
+        if(opciones[i].part_status=='1'){
+            if(this->name==toString(opciones[i].part_name)){
+                    if(this->add>0){
+                        if(i==3){ //es la última partición
+                            int freeSpace =  mbr.mbr_tamanio-sizeof(MBR)-mbr.mbr_partition_1.part_size-mbr.mbr_partition_2.part_size-mbr.mbr_partition_3.part_size-mbr.mbr_partition_4.part_size;
+                            if(freeSpace>=this->add){
+                                //se crea el espacio
+                                (opciones[i].part_start==mbr.mbr_partition_1.part_start)?mbr.mbr_partition_1.part_size=mbr.mbr_partition_1.part_size+this->add:(opciones[i].part_start==mbr.mbr_partition_2.part_start)?mbr.mbr_partition_2.part_size=mbr.mbr_partition_2.part_size+this->add:(opciones[i].part_start==mbr.mbr_partition_3.part_start)?mbr.mbr_partition_3.part_size=mbr.mbr_partition_3.part_size+this->add:mbr.mbr_partition_4.part_size=mbr.mbr_partition_4.part_size+this->add;
+                                fseek(search, 0, SEEK_SET);
+                                fwrite(&mbr, sizeof(MBR), 1, search);
+                                fflush(search);
+                                cout <<"Se ha agregado el espacio a la partición."<<endl;
+                                return;
+                            }
+                            else{
+                                cout <<"ERROR: No hay suficiente espacio para expandir la partición, solo hay "+to_string(freeSpace)+" bytes disponibles." <<endl;;
+                            }
+                        }
+                        else{
+                            if(opciones[i+1].part_status=='0'){
+                                //se crea
+                                int aumentada;
+                                (opciones[i].part_start==mbr.mbr_partition_1.part_start)?aumentada=1:(opciones[i].part_start==mbr.mbr_partition_2.part_start)?aumentada=2:(opciones[i].part_start==mbr.mbr_partition_3.part_start)?aumentada=3:aumentada=4;
+                                switch(aumentada){
+                                    case 1:
+                                        mbr.mbr_partition_1.part_size=mbr.mbr_partition_1.part_size+this->add;
+                                        mbr.mbr_partition_2.part_start=mbr.mbr_partition_1.part_size+this->add;
+                                        mbr.mbr_partition_2.part_size=mbr.mbr_partition_2.part_size-this->add;
+                                        break;
+                                    case 2:
+                                        mbr.mbr_partition_2.part_size=mbr.mbr_partition_2.part_size+this->add;
+                                        mbr.mbr_partition_3.part_start=mbr.mbr_partition_2.part_size+this->add;
+                                        mbr.mbr_partition_3.part_size=mbr.mbr_partition_3.part_size-this->add;
+                                        break;
+                                    case 3:
+                                        mbr.mbr_partition_3.part_size=mbr.mbr_partition_3.part_size+this->add;
+                                        mbr.mbr_partition_4.part_start=mbr.mbr_partition_3.part_size+this->add;
+                                        mbr.mbr_partition_4.part_size=mbr.mbr_partition_4.part_size-this->add;
+                                        break;
+                                }
+                                fseek(search, 0, SEEK_SET);
+                                fwrite(&mbr, sizeof(MBR), 1, search);
+                                fflush(search);
+                                cout <<"Se ha agregado el espacio a la partición."<<endl;
+                                return;
+                            }
+                            else{
+                                int spaceBetween = opciones[i+1].part_start - (opciones[i].part_start+opciones[i].part_size);
+                                //cout << "space = "+to_string(spaceBetween)+ " between "+to_string(opciones[i+1].part_start)+" - "+to_string(opciones[i].part_start)+"+"+to_string(opciones[i].part_size)+" wants to add "+to_string(this->add)<<endl;
+                                if(spaceBetween>=this->add){
+                                    int aumentada;
+                                    (opciones[i].part_start==mbr.mbr_partition_1.part_start)?aumentada=1:(opciones[i].part_start==mbr.mbr_partition_2.part_start)?aumentada=2:(opciones[i].part_start==mbr.mbr_partition_3.part_start)?aumentada=3:aumentada=4;
+                                    switch(aumentada){
+                                        case 1:
+                                            mbr.mbr_partition_1.part_size=mbr.mbr_partition_1.part_size+this->add;
+                                            break;
+                                        case 2:
+                                            mbr.mbr_partition_2.part_size=mbr.mbr_partition_2.part_size+this->add;
+                                            break;
+                                        case 3:
+                                            mbr.mbr_partition_3.part_size=mbr.mbr_partition_3.part_size+this->add;
+                                            break;
+                                    }
+                                    fseek(search, 0, SEEK_SET);
+                                    fwrite(&mbr, sizeof(MBR), 1, search);
+                                    fflush(search);
+                                    cout <<"Se ha agregado el espacio a la partición."<<endl;
+                                    return;
+                                }else{
+                                    cout << "ERROR: No se ha aumentado el volumen de la partición, tiene "+to_string(spaceBetween)+" bytes disponibles a su derecha."<<endl;
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    else{
+                        if(opciones[i].part_type=='e'){
+                            EBR ebr;
+                            fseek(search, opciones[i].part_start, SEEK_SET);
+                            fread(&ebr, sizeof(EBR), 1, search);
+                            while(true){
+                                if(ebr.part_next==-1){
+                                    break;
+                                }
+                                fseek(search, ebr.part_next, SEEK_SET);
+                                fread(&ebr, sizeof(EBR), 1, search);
+                            }
+                            if(ebr.part_start-sizeof(EBR)+ebr.part_size>opciones[i].part_size+this->add){
+                                cout<< "ERROR: No se puede reducir el espacio de la partición extendida porque esto afecta el tamaño a la última partición lógica."<<endl;
+                                return;
+                            }
+                        }
+                        if(opciones[i].part_size+this->add<0){
+                            cout << "No se puede dejar la partición con un tamaño negativo"<<endl;
+                            return;
+                        }
+                        (opciones[i].part_start==mbr.mbr_partition_1.part_start)?mbr.mbr_partition_1.part_size=mbr.mbr_partition_1.part_size+this->add:(opciones[i].part_start==mbr.mbr_partition_2.part_start)?mbr.mbr_partition_2.part_size=mbr.mbr_partition_2.part_size+this->add:(opciones[i].part_start==mbr.mbr_partition_3.part_start)?mbr.mbr_partition_3.part_size=mbr.mbr_partition_3.part_size+this->add:mbr.mbr_partition_4.part_size=mbr.mbr_partition_4.part_size+this->add;
+                        fseek(search, 0, SEEK_SET);
+                        fwrite(&mbr, sizeof(MBR), 1, search);
+                        fflush(search);
+                        cout << "Se ha reducido la partición."<<endl;
+                        return;
+                    }
+                }
+            }
+        }
+    if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type=='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type=='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type=='e' && mbr.mbr_partition_4.part_status=='1'){
+        partition extendida = (mbr.mbr_partition_1.part_type=='e')?mbr.mbr_partition_1:(mbr.mbr_partition_2.part_type=='e')?mbr.mbr_partition_2:(mbr.mbr_partition_3.part_type=='e')?mbr.mbr_partition_3:mbr.mbr_partition_4;
+        EBR ebr;
+        fseek(search, extendida.part_start, SEEK_SET);
+        fread(&ebr, sizeof(EBR), 1, search);
+        while(true){
+            if(this->name==toString(ebr.part_name)){
+                //aumento y encojimiento de particiones lógicas
+            }
+            if(ebr.part_next==-1){
+                break;
+            }
+            fseek(search, ebr.part_next, SEEK_SET);
+            fread(&ebr, sizeof(EBR), 1, search);
+        }
+    }
 }

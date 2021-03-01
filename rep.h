@@ -182,6 +182,12 @@ void _REP::graphDisk(){
                 graph=graph+"<td colspan=\""+to_string(colspan)+"\">Extendida</td>";
             }
         }
+        int freeSpace = particiones[i+1].part_start-(particiones[i].part_start+particiones[i].part_size);
+        int porcentajeFree = freeSpace * 100;
+        porcentajeFree=porcentajeFree/mbr.mbr_tamanio;
+        if(freeSpace>0){
+            graph=graph+"<td rowspan=\"2\">Libre <br/>"+to_string(porcentajeFree)+"%</td>";
+        }
     }
     int freeSpace =  mbr.mbr_tamanio-sizeof(MBR)-mbr.mbr_partition_1.part_size-mbr.mbr_partition_2.part_size-mbr.mbr_partition_3.part_size-mbr.mbr_partition_4.part_size;
     if(freeSpace>0) graph=graph+"<td rowspan=\"2\">Libre <br/>"+to_string((freeSpace*100)/mbr.mbr_tamanio)+"%</td>";
