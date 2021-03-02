@@ -109,7 +109,7 @@ INSTRUCCION:
     | exec guion path igual cadena {execV = new _EXEC(); execV->setPath($5, true); execV->exe();}
     | exec guion path igual ruta {execV = new _EXEC(); execV->setPath($5, false); execV->exe();}
     | pause_ {cout << "La ejecución del script se ha pausado, por favor presiona cualquier tecla para continuar."; cin.get();}
-    | mount MOUNTP 
+    | mount {mountV = new _MOUNT();} MOUNTP {mountV->exe();/*realiza la eliminación del disco*/}
     | error {std::cout << "error";}
 ;
 

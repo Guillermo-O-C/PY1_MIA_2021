@@ -1,22 +1,6 @@
 #include <iostream>
+#include "mountStructs.h"
 using namespace std;
-
-struct particionMontada{    
-    public:
-        char path[100]="";
-        char name[16]="";
-        void setPath(string path, bool isCadena);
-        void setName(string name, bool isCadena);
-};
-struct disco{
-    public:
-        char letra='0';
-        char path[100]="";
-        int status=0;
-        particionMontada particiones[99];
-};
-
-/*extern*/ disco discosMontados[26];
 
 class _MOUNT{
     public:
@@ -66,7 +50,6 @@ void _MOUNT::exe(){
         return;
     }
     fclose(existe);
-
     
     int diskSpot=-1;
     for(int i =0;i < 26;i++){
@@ -86,6 +69,7 @@ void _MOUNT::exe(){
             return;
         }
     }
+    cout << "El disco see colocará en el espacio no."+to_string(diskSpot)<<endl;
 
     
 };

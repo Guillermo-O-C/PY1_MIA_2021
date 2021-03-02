@@ -3,10 +3,13 @@ using namespace std;
 #include "scanner.h"
 #include "parser.h"
 #include "mbr.h"
+#include "mountStructs.h"
+
 extern int yylex(void);
 extern char *yytext;
 extern FILE *yyin;
 extern int yyparse(void);
+disco discosMontados[26];
 
 void parse(){
     string entry;
