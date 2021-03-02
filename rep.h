@@ -156,17 +156,27 @@ void _REP::graphDisk(){
                         if(ebr.part_start==particiones[i].part_start+sizeof(EBR)){//en caso de que el primer EBR esté dehabilitado
                             int porcentaje = ebr.part_size*100;
                             porcentaje=porcentaje/mbr.mbr_tamanio;
-                            colspan++;
-                            extended = extended + "<td>EBR</td><td>Libre <br/>"+to_string(porcentaje)+"%</td>";
-                        }
+                            //colspan++;
+                            extended = extended + "<td>EBR</td>"/*<td>Libre <br/>"+to_string(porcentaje)+"%</td>"*/;
+                        }/*se quita porque ya no se guardan los EBR deshabilitados
                         else{
                             int porcentaje = ebr.part_size*100;
                             porcentaje=porcentaje/mbr.mbr_tamanio;
                             extended = extended + "<td>Libre <br/>"+to_string(porcentaje)+"%</td>";
-                        }
+                        }*/
                     }
                     if(ebr.part_next==-1){
                         break;
+                    }
+                    int spaceBetween = ebr.part_next-(ebr.part_start+ebr.part_size);
+                    if(ebr.part_start==particiones[i].part_start+sizeof(EBR) && ebr.part_status=='0'){//en caso de que el primer EBR esté dehabilitado
+                        spaceBetween = ebr.part_next-(ebr.part_start-sizeof(EBR));
+                    }
+                    if(ebr.part_start>0){
+                        int porcentaje = (spaceBetween)*100;
+                        porcentaje=porcentaje/mbr.mbr_tamanio;
+                        extended = extended + "<td>Libre <br/>"+to_string(porcentaje)+"%</td>";
+                        colspan++;
                     }
                     fseek(search, ebr.part_next, SEEK_SET);
                     fread(&ebr, sizeof(EBR), 1, search);

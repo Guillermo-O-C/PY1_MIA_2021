@@ -10,6 +10,8 @@
 #include "rmdisk.h"
 #include "fdisk.h"
 #include "rep.h"
+#include "exec.h"
+#include "mount.h"
 
 using namespace std;
 extern int yylex(void);
@@ -18,10 +20,13 @@ extern FILE *yyin;
 extern void yyerror(const char *s);
 extern int linea;
 
+
 _MKDISK * mkdiskV;
 _RMDISK * rmdiskV;
 _FDISK * fdiskV;
 _REP * repV;
+_EXEC * execV;
+_MOUNT * mountV;
 %}
 
 %start INIT
@@ -61,6 +66,8 @@ _REP * repV;
 %token<STRING> R_id
 %token<STRING> R_ruta
 %token<STRING> partition_id
+%token<STRING> exec
+%token<STRING> pause_
 
 %type<STRING> INIT
 %type<STRING> INSTRUCCION
@@ -73,6 +80,8 @@ _REP * repV;
 %type<STRING> FDISKPARAM
 %type<STRING> REPP
 %type<STRING> REPPARAM
+%type<STRING> MOUNTP
+%type<STRING> MOUNTPARAM
 
 %define parse.error verbose
 %locations
@@ -84,7 +93,7 @@ _REP * repV;
 
 %%
 INIT:
-    INSTRUCCIONES
+    INSTRUCCIONES 
 ;
 
 INSTRUCCIONES:
@@ -97,6 +106,10 @@ INSTRUCCION:
     | rmdisk {rmdiskV = new _RMDISK();} RMDISKP {rmdiskV->exe();/*realiza la eliminación del disco*/}
     | fdisk {fdiskV = new _FDISK();} FDISKP {fdiskV->exe();/*realiza la eliminación del disco*/}
     | rep {repV = new _REP();} REPP {repV->exe();/*Imprime los reportes*/}
+    | exec guion path igual cadena {execV = new _EXEC(); execV->setPath($5, true); execV->exe();}
+    | exec guion path igual ruta {execV = new _EXEC(); execV->setPath($5, false); execV->exe();}
+    | pause_ {cout << "La ejecución del script se ha pausado, por favor presiona cualquier tecla para continuar."; cin.get();}
+    | mount MOUNTP 
     | error {std::cout << "error";}
 ;
 
@@ -153,6 +166,17 @@ REPPARAM:
     |   guion R_id igual id {repV->setId($4);}
     |   guion R_id igual partition_id {repV->setId($4);}
     |   guion R_ruta igual ruta {repV->setRuta($4);}
+;
+MOUNTP:
+    MOUNTP MOUNTPARAM
+    | MOUNTPARAM
+;
+
+MOUNTPARAM :
+        guion name igual id {mountV->setName($4, false);}
+    |   guion name igual cadena {mountV->setName($4, true);}
+    |   guion path igual ruta {mountV->setPath($4, false);}
+    |   guion path igual cadena {mountV->setPath($4, true);}
 ;
 %%
 void yyerror(const char *s)

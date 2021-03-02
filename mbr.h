@@ -6,7 +6,7 @@ using namespace std;
 struct MBR {
     public:
         int mbr_disk_signature=0;
-        char disk_fit='B';
+        char disk_fit='F';
         partition mbr_partition_1;
         partition mbr_partition_2;
         partition mbr_partition_3;

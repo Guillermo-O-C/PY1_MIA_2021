@@ -189,7 +189,6 @@ void _FDISK::exe(){
                 EBR ebr, bestOption;
                 fseek(search, extendida.part_start, SEEK_SET);
                 fread(&ebr, sizeof(EBR), 1, search);
-                cout << to_string(ebr.part_start)<<endl;
                 bestOption=ebr;
                 int lastStart;
                 while(lastStart<ebr.part_next){
@@ -216,7 +215,6 @@ void _FDISK::exe(){
                     fread(&ebr, sizeof(EBR), 1, search);
                 }
                 if(bestOption.part_start==extendida.part_start+sizeof(EBR) && bestOption.part_status=='0'){
-                    cout << "if"<<endl;
                     //es el primer ebr de la extendida
                     bestOption.part_fit=this->f.c_str()[0];
                     bestOption.part_size=this->size;
@@ -226,7 +224,6 @@ void _FDISK::exe(){
                     fseek(search,bestOption.part_start-sizeof(EBR), SEEK_SET);
                     fwrite(&bestOption, sizeof(EBR), 1, search);
                 }else if(bestOption.part_status=='1'/* && bestOption.part_size<this->size*/){
-                    cout << "else if"<<endl;
                     //no consiguio un fit
                     EBR lastEBR;
                     fseek(search, extendida.part_start, SEEK_SET);
@@ -256,7 +253,6 @@ void _FDISK::exe(){
                     fwrite(&nuevoEBR, sizeof(EBR), 1, search);
                     fflush(search);
                 }else{
-                    cout << "else"<<endl;
                     bestOption.part_fit=this->f.c_str()[0]; 
                     strcpy(bestOption.part_name,this->name.c_str());
                     bestOption.part_status='1';
@@ -423,6 +419,7 @@ void _FDISK::deletePartition(){
     if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type=='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type=='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type=='e' && mbr.mbr_partition_4.part_status=='1'){
         partition extendida = (mbr.mbr_partition_1.part_type=='e')?mbr.mbr_partition_1:(mbr.mbr_partition_2.part_type=='e')?mbr.mbr_partition_2:(mbr.mbr_partition_3.part_type=='e')?mbr.mbr_partition_3:mbr.mbr_partition_4;
         EBR ebr;
+        int anterior;
         fseek(search, extendida.part_start, SEEK_SET);
         fread(&ebr, sizeof(EBR), 1, search);
         while(true){
@@ -432,26 +429,37 @@ void _FDISK::deletePartition(){
                 string answer;
                 getline(cin, answer);
                 if(toLowerCase(answer)=="s"){
-                    if(this->delete_=="fast"){
-                        ebr.part_status='0';
-                        fseek(search, ebr.part_start-sizeof(EBR),SEEK_SET);
-                        fwrite(&ebr, sizeof(EBR), 1, search);
+                    if(anterior!=0){
+                        EBR anteriorEBR;
+                        fseek(search, anterior-sizeof(EBR), SEEK_SET);
+                        fread(&anteriorEBR, sizeof(EBR), 1, search);
+                        anteriorEBR.part_next=ebr.part_next;
+                        fseek(search, anterior-sizeof(EBR), SEEK_SET);
+                        fwrite(&anteriorEBR, sizeof(EBR), 1, search);
                         fflush(search);
-                    }else{
-                        ebr.part_status='0';
-                        fseek(search, ebr.part_start-sizeof(EBR),SEEK_SET);
-                        fwrite(&ebr, sizeof(EBR), 1, search);
-                        fflush(search);
-                        cout << "Eliminando toda la partición, esto podría tomar un poco de tiempo."+to_string(ebr.part_start+ebr.part_size-sizeof(EBR))<<endl;
-                        //cout << "se eliminada desde "+to_string(ebr.part_start)+" hasta "+to_string(ebr.part_start+ebr.part_size-sizeof(EBR))<<endl;
-                        for(int e =ebr.part_start; e<ebr.part_start+ebr.part_size-sizeof(EBR); e++){
-                            fseek(search, e ,SEEK_SET);
-                            fwrite("\0", 1, 1, search);
-                            fflush(search);
-                            //cout << "eliminando byte "+to_string(e)<<endl;
+                        if(this->delete_=="full"){
+                            for(int e =ebr.part_start-sizeof(EBR);e<ebr.part_start-sizeof(EBR)+ebr.part_size;e++){
+                                fseek(search, e ,SEEK_SET);
+                                fwrite("\0", 1, 1, search);
+                                fflush(search); 
+                            }
                         }
-                        cout << "particion eliminada";
-                    }
+                    }else{//es el primero
+                        if(this->delete_=="fast"){
+                            ebr.part_status='0';
+                            fseek(search, ebr.part_start-sizeof(EBR),SEEK_SET);
+                            fwrite(&ebr, sizeof(EBR), 1, search);
+                            fflush(search);
+                        }else{
+                            ebr.part_status='0';
+                            cout << "Eliminando toda la partición, esto podría tomar un poco de tiempo."+to_string(ebr.part_start+ebr.part_size-sizeof(EBR))<<endl;
+                            for(int e =ebr.part_start; e<ebr.part_start+ebr.part_size-sizeof(EBR); e++){
+                                fseek(search, e ,SEEK_SET);
+                                fwrite("\0", 1, 1, search);
+                                fflush(search);
+                            }
+                        }
+                    }                    
                     cout << "Se ha elimidado la partición "+toString(ebr.part_name)<<endl;
                 }else{
                     cout << "No se ha eliminado la partición."<<endl;
@@ -461,6 +469,7 @@ void _FDISK::deletePartition(){
             if(ebr.part_next==-1){
                 break;
             }
+            anterior = ebr.part_start;
             fseek(search, ebr.part_next, SEEK_SET);
             fread(&ebr, sizeof(EBR), 1, search);
         }
@@ -605,13 +614,57 @@ void _FDISK::addPartition(){
         fread(&ebr, sizeof(EBR), 1, search);
         while(true){
             if(this->name==toString(ebr.part_name)){
-                //aumento y encojimiento de particiones lógicas
+                if(this->add>0){
+                    if(ebr.part_status=='1'){
+                        if(ebr.part_next==-1){
+                            if(extendida.part_size>ebr.part_start+ebr.part_size+this->add-sizeof(EBR)){
+                                ebr.part_size=ebr.part_size+this->add;
+                                fseek(search, ebr.part_start-sizeof(EBR), SEEK_SET);
+                                fwrite(&ebr, sizeof(EBR), 1, search);
+                                fflush(search);
+                            }else{
+                                cout << "ERROR: No hay suficiente espacio en la partición extendida para expandir la partición lógica."<<endl;
+                                return;
+                            }
+                        }
+                        else{//desde aca tendría que cambiarlo si es que se cuando se borra se elimina también el ebr
+                            EBR next;
+                            fseek(search, ebr.part_next, SEEK_SET);
+                            fread(&next, sizeof(EBR),1, search);
+                            int spaceBetween=next.part_start-sizeof(EBR) - (ebr.part_start+ebr.part_size);
+                            if(spaceBetween>=this->add){
+                                ebr.part_size=ebr.part_size+this->add;
+                                fseek(search, ebr.part_start-sizeof(EBR), SEEK_SET);
+                                fwrite(&ebr, sizeof(EBR), 1, search);
+                                fflush(search);
+                                cout << "Se ha aumentado el espacio de la partición lógica"<<endl;
+                                return;
+                            }else{
+                                cout << "ERROR: No hay suficiente espacio a la derecha de la partición lógica."<<endl;
+                                return;
+                            }
+                        }
+                    }
+                }
+                else{
+                    if(ebr.part_size<-this->add){
+                        cout << "No se puede dejar la   partición con un volumen negativo."<<endl;
+                        return;
+                    }
+                    ebr.part_size=ebr.part_size+this->add;
+                    fseek(search, ebr.part_start-sizeof(EBR), SEEK_SET);
+                    fwrite(&ebr, sizeof(EBR), 1, search);
+                    fflush(search);
+                    cout << "Se ha reducido la partición lógica"<<endl;
+                    return;
+                }
+                if(ebr.part_next==-1){
+                    break;
+                }
+                fseek(search, ebr.part_next, SEEK_SET);
+                fread(&ebr, sizeof(EBR), 1, search);
             }
-            if(ebr.part_next==-1){
-                break;
-            }
-            fseek(search, ebr.part_next, SEEK_SET);
-            fread(&ebr, sizeof(EBR), 1, search);
         }
     }
+    cout << "No se ha encontrado la partición."<<endl;
 }

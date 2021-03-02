@@ -83,7 +83,9 @@ extern int yydebug;
     rep = 289,
     R_id = 290,
     R_ruta = 291,
-    partition_id = 292
+    partition_id = 292,
+    exec = 293,
+    pause_ = 294
   };
 #endif
 
@@ -91,12 +93,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 80 "gramatica.y"
+#line 89 "gramatica.y"
 
     char*STRING;
     char*NUM;
 
-#line 100 "parser.h"
+#line 102 "parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;
