@@ -110,6 +110,7 @@ INSTRUCCION:
     | exec guion path igual ruta {execV = new _EXEC(); execV->setPath($5, false); execV->exe();}
     | pause_ {cout << "La ejecución del script se ha pausado, por favor presiona cualquier tecla para continuar."; cin.get();}
     | mount {mountV = new _MOUNT();} MOUNTP {mountV->exe();/*realiza la eliminación del disco*/}
+    | unmount guion R_id igual partition_id {mountV->unmount($5); }
     | error {std::cout << "error";}
 ;
 

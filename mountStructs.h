@@ -1,13 +1,14 @@
 #include <iostream>
 using namespace std;
 
+
 struct particionMontada{    
     public:
-        char path[100]="";
         char name[16]="";
-        void setPath(string path, bool isCadena);
-        void setName(string name, bool isCadena);
+        int status = 0;
+        int numero = 0;
 };
+
 struct disco{
     public:
         char letra='0';
