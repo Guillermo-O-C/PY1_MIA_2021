@@ -3,6 +3,7 @@
 #include <fstream>
 using namespace std;
 #include "mbr.h"
+#include "mountStructs.h"
 
 
 class _REP{
@@ -11,8 +12,14 @@ class _REP{
     string path;
     string id;
     string ruta;
+    string diskPath;
+    int partitionSpot;
     public:
-    _REP(){};
+    _REP(){
+        this->name="";
+        this->path="";
+        this->id="";
+    };
     void setPath(string path, bool isCadena);
     void setName(string name);
     void setId(string id);
@@ -36,11 +43,31 @@ void _REP::setName(string name){
 };
 void _REP::setId(string id){
     this->id=id;
+    int diskSpot = (int)id[3]-65;
+    int partSpot=id[2]-'0';//se le resta uno para obotener la posición en el array
+    partSpot--;
+    if(int(id[3])<65){//es una partición con un número de <9
+        char temp[2]={ id[2], id[3]};
+        partSpot=atoi(temp)-1;//restamos uno para obtener la posición del array
+        diskSpot = (int)id[4]-65;
+    }
+    this->diskPath=discosMontados[diskSpot].path;
+    this->partitionSpot=partSpot;
 };
 void _REP::setRuta(string ruta){
     this->ruta=ruta;
 };
 void _REP::exe(){
+    if(this->id==""){
+        cout << "ERROR: El parámetro ID es obligatorio."<<endl;
+        return;
+    }else if(this->name==""){
+        cout << "ERROR: El parámetro name es obligatorio."<<endl;
+        return;
+    }else if(this->path==""){
+        cout << "ERROR: El parámetro path es obligatorio."<<endl;
+        return;
+    }
     if(this->name=="mbr"){
         graphMbr();
     }else if(this->name=="disk"){
@@ -49,7 +76,7 @@ void _REP::exe(){
 };
 
 void _REP::graphMbr(){
-    FILE *search =  fopen("/home/mis discos/Disco3.dk", "rb+");
+    FILE *search =  fopen(this->diskPath.c_str(), "rb+");
     MBR mbr;
     fread(&mbr, sizeof(MBR), 1, search);
     string diskName = "";
@@ -114,7 +141,7 @@ void _REP::graphMbr(){
 }
 
 void _REP::graphDisk(){
-    FILE *search =  fopen("/home/mis discos/Disco3.dk", "rb+");
+    FILE *search =  fopen(this->diskPath.c_str(), "rb+");
     MBR mbr;
     fread(&mbr, sizeof(MBR), 1, search);
     string extended="</tr><tr>", graph = "digraph G {\nlabel = <<table><tr><td rowspan=\"2\">MBR</td>";

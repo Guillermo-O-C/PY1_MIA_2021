@@ -70,6 +70,14 @@ void _MOUNT::exe(){
             return;
         }
     }
+    
+    for(int i =0;i<99;i++){
+        if(nameToString(discosMontados[diskSpot].particiones[i].name)==this->name && discosMontados[diskSpot].particiones[i].status==1){
+            cout << "ERROR: La partición "+this->name+" ya está montada."<<endl;
+            return;
+        }
+    }
+    
     FILE *search =  fopen(this->path.c_str(), "rb+");
     MBR mbr;
     fread(&mbr, sizeof(MBR), 1, search);
@@ -127,10 +135,7 @@ void _MOUNT::unmount(char * id){
         partSpot=atoi(temp)-1;//restamos uno para obtener la posición del array
         diskSpot = (int)id[4]-65;
     }
-    cout <<"diskSpot is "<<to_string(diskSpot)<< " partspot is "<<to_string((int)partSpot)<<endl;
     if(discosMontados[diskSpot].status==1){//el disco funciona
-        cout << to_string(discosMontados[diskSpot].particiones[partSpot].status)<<endl;
-        cout << "name="<<discosMontados[diskSpot].particiones[partSpot].name<<" status="+to_string(discosMontados[diskSpot].particiones[partSpot].status)<<endl;
         if(discosMontados[diskSpot].particiones[partSpot].status==1){
             discosMontados[diskSpot].particiones[partSpot].status=0;
             cout << "Se ha desmontado la partición "<<id<<" exitosamente."<<endl;
