@@ -1,5 +1,6 @@
 #include <iostream>
 #include "mountStructs.h"
+#include "partitionStructs.h"
 using namespace std;
 
 class _MOUNT{
@@ -90,7 +91,18 @@ void _MOUNT::exe(){
                         strcpy(discosMontados[diskSpot].particiones[e].name,opciones[i].part_name);
                         discosMontados[diskSpot].particiones[e].status=1;
                         discosMontados[diskSpot].particiones[e].numero=e+1;//se le guarda como uno más de su posición de array
-                        cout << discosMontados[diskSpot].particiones[e].name<<endl;
+                        SB superBloque;
+                        fseek(search, opciones[i].part_start, SEEK_SET);
+                        fread(&superBloque, sizeof(SB), 1, search);
+                        time_t t;
+                        struct tm *tm;
+                        char fechayhora[16];
+                        t = time(NULL);
+                        tm = localtime(&t);
+                        strftime(fechayhora, 20, "%d/%m/%Y %H:%M", tm);
+                        strcpy(superBloque.s_mtime,fechayhora);fseek(search, opciones[i].part_start, SEEK_SET);
+                        fwrite(&superBloque, sizeof(SB), 1, search);
+                        fflush(search);                        
                         cout << "Se ha montado la partición correctamente, su id es 66"<<to_string(discosMontados[diskSpot].particiones[e].numero)+discosMontados[diskSpot].letra<<endl;
                         return;
                     }
@@ -111,6 +123,18 @@ void _MOUNT::exe(){
                         strcpy(discosMontados[diskSpot].particiones[e].name,ebr.part_name);
                         discosMontados[diskSpot].particiones[e].status=1;
                         discosMontados[diskSpot].particiones[e].numero=e+1;//se le guarda como uno más de su posición de array
+                        SB superBloque;
+                        fseek(search, ebr.part_start, SEEK_SET);
+                        fread(&superBloque, sizeof(SB), 1, search);
+                        time_t t;
+                        struct tm *tm;
+                        char fechayhora[16];
+                        t = time(NULL);
+                        tm = localtime(&t);
+                        strftime(fechayhora, 20, "%d/%m/%Y %H:%M", tm);
+                        strcpy(superBloque.s_mtime,fechayhora);fseek(search, ebr.part_start, SEEK_SET);
+                        fwrite(&superBloque, sizeof(SB), 1, search);
+                        fflush(search);
                         cout << "Se ha montado la partición correctamente, su id es 66"<<to_string(discosMontados[diskSpot].particiones[e].numero)+discosMontados[diskSpot].letra<<endl;
                         return;
                     }
@@ -138,6 +162,54 @@ void _MOUNT::unmount(char * id){
     if(discosMontados[diskSpot].status==1){//el disco funciona
         if(discosMontados[diskSpot].particiones[partSpot].status==1){
             discosMontados[diskSpot].particiones[partSpot].status=0;
+            FILE * search = fopen(discosMontados[diskSpot].path, "rb+");
+            MBR mbr;
+            fread(&mbr, sizeof(MBR), 1, search);
+            partition opciones[4] = {mbr.mbr_partition_1, mbr.mbr_partition_2, mbr.mbr_partition_3,mbr.mbr_partition_4};
+            SB superBloque;
+            for(int i =0;i<4;i++){
+                if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
+                    if(nameToString(discosMontados[diskSpot].particiones[partSpot].name)==nameToString(opciones[i].part_name)){//se encontró la partición
+                        time_t t;
+                        struct tm *tm;
+                        char fechayhora[16];
+                        t = time(NULL);
+                        tm = localtime(&t);
+                        strftime(fechayhora, 20, "%d/%m/%Y %H:%M", tm);
+                        strcpy(superBloque.s_umtime,fechayhora);
+                        fseek(search, opciones[i].part_start, SEEK_SET);
+                        fwrite(&superBloque, sizeof(SB), 1, search);
+                        fflush(search);                        
+                    } 
+                }        
+            }
+            if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type=='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type=='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type=='e' && mbr.mbr_partition_4.part_status=='1'){
+                partition extendida = (mbr.mbr_partition_1.part_type=='e')?mbr.mbr_partition_1:(mbr.mbr_partition_2.part_type=='e')?mbr.mbr_partition_2:(mbr.mbr_partition_3.part_type=='e')?mbr.mbr_partition_3:mbr.mbr_partition_4;
+                EBR ebr;
+                int anterior;
+                fseek(search, extendida.part_start, SEEK_SET);
+                fread(&ebr, sizeof(EBR), 1, search);
+                while(true){
+                if(nameToString(discosMontados[diskSpot].particiones[partSpot].name)==nameToString(ebr.part_name) && ebr.part_status=='1'){
+                    time_t t;
+                    struct tm *tm;
+                    char fechayhora[16];
+                    t = time(NULL);
+                    tm = localtime(&t);
+                    strftime(fechayhora, 20, "%d/%m/%Y %H:%M", tm);
+                    strcpy(superBloque.s_umtime,fechayhora);
+                    fseek(search, ebr.part_start, SEEK_SET);
+                    fwrite(&superBloque, sizeof(SB), 1, search);
+                    fflush(search);  
+                }
+                if(ebr.part_next==-1){
+                    break;
+                }
+                anterior = ebr.part_start;
+                fseek(search, ebr.part_next, SEEK_SET);
+                fread(&ebr, sizeof(EBR), 1, search);
+                }
+            }
             cout << "Se ha desmontado la partición "<<id<<" exitosamente."<<endl;
         }else{
             cout << "ERROR:No hay una partición montada en el espacio "<<(char)(partSpot+1)<<endl;

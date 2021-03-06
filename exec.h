@@ -25,6 +25,7 @@ void _EXEC::setPath(string path, bool isCadena){
 }
 void _EXEC::exe(){
     ifstream file(this->path);
+    if(!file) cout << "No se ha encontrado el script"<<endl;
     string contenido, linea;
     YY_BUFFER_STATE buffer;
     while (getline(file, linea)) {

@@ -12,6 +12,7 @@
 #include "rep.h"
 #include "exec.h"
 #include "mount.h"
+#include "mkfs.h"
 
 using namespace std;
 extern int yylex(void);
@@ -27,6 +28,7 @@ _FDISK * fdiskV;
 _REP * repV;
 _EXEC * execV;
 _MOUNT * mountV;
+_MKFS * mkfsV;
 %}
 
 %start INIT
@@ -82,6 +84,8 @@ _MOUNT * mountV;
 %type<STRING> REPPARAM
 %type<STRING> MOUNTP
 %type<STRING> MOUNTPARAM
+%type<STRING> MKFSP
+%type<STRING> MKFSPARAM
 
 %define parse.error verbose
 %locations
@@ -108,9 +112,10 @@ INSTRUCCION:
     | rep {repV = new _REP();} REPP {repV->exe();/*Imprime los reportes*/}
     | exec guion path igual cadena {execV = new _EXEC(); execV->setPath($5, true); execV->exe();}
     | exec guion path igual ruta {execV = new _EXEC(); execV->setPath($5, false); execV->exe();}
-    | pause_ {cout << "La ejecución del script se ha pausado, por favor presiona cualquier tecla para continuar."; cin.get();}
+    | pause_ {cout << "\nLa ejecución del script se ha pausado, por favor presiona cualquier tecla para continuar."; cin.get();}
     | mount {mountV = new _MOUNT();} MOUNTP {mountV->exe();/*realiza la eliminación del disco*/}
     | unmount guion R_id igual partition_id {mountV->unmount($5); }
+    | mkfs {mkfsV = new _MKFS();} MKFSP {mkfsV->exe();}
     | error {std::cout << "error";}
 ;
 
@@ -178,6 +183,17 @@ MOUNTPARAM :
     |   guion name igual cadena {mountV->setName($4, true);}
     |   guion path igual ruta {mountV->setPath($4, false);}
     |   guion path igual cadena {mountV->setPath($4, true);}
+;
+
+MKFSP:
+    MKFSP MKFSPARAM
+    | MKFSPARAM
+;
+
+MKFSPARAM :
+        guion R_id igual partition_id {mkfsV->setId($4);}
+    |   guion type igual id {mkfsV->setType($4);}
+    |   guion fs igual numero fs {mkfsV->setFs(atoi($4)); }
 ;
 %%
 void yyerror(const char *s)
