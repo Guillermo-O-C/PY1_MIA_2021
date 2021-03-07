@@ -272,10 +272,12 @@ void _REP::graphBM_Inodos(){
                 fseek(search, opciones[i].part_start, SEEK_SET);
                 fread(&superbloque, sizeof(SB), 1, search);
                 int row=0;
-                for(int e = superbloque.s_inode_start;e<superbloque.s_inode_start+superbloque.s_inodes_count-superbloque.s_free_inodes_count;e=e++){
+                cout<< "Generando reporte, por favor espera..."<<endl;
+                for(int e = superbloque.s_bm_inode_start;e<superbloque.s_bm_inode_start+superbloque.s_inodes_count;e++){
                     fseek(search, e, SEEK_SET);
                     char byte;
                     fread(&byte, 1, 1, search);
+                    if(byte=='\0')cout<<to_string(e)<<" es null"<<endl;
                     bitmap=bitmap+byte;
                     row++;
                     if(row==20){
@@ -321,7 +323,29 @@ void _REP::graphBM_Blocks(){
     for(int i =0;i<4;i++){
         if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
             if(name==nameToString(opciones[i].part_name)){
-
+                string bitmap="";
+                SB superbloque;
+                fseek(search, opciones[i].part_start, SEEK_SET);
+                fread(&superbloque, sizeof(SB), 1, search);
+                int row=0;
+                cout<< "Generando reporte, por favor espera..."<<endl;
+                for(int e = superbloque.s_bm_block_start;e<superbloque.s_bm_block_start+superbloque.s_blocks_count;e++){
+                    fseek(search, e, SEEK_SET);
+                    char byte;
+                    fread(&byte, 1, 1, search);
+                    if(byte=='\0')cout<<to_string(e)<<" es null"<<endl;
+                    bitmap=bitmap+byte;
+                    row++;
+                    if(row==20){
+                        bitmap=bitmap+"\n";
+                        row=0;
+                    }
+                }
+                ofstream graphFile;
+                graphFile.open(this->path.substr(0, this->path.length()-4)+".txt");
+                graphFile << bitmap;
+                graphFile.close();
+                cout << "Reporte generado exitosamente."<<endl;
                 return;
             }
         }
@@ -355,7 +379,45 @@ void _REP::graphInodos(){
     for(int i =0;i<4;i++){
         if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
             if(name==nameToString(opciones[i].part_name)){
-
+                string graph= "digraph G {\nnode[ shape=box fontname=Helvetica ] rankdir = LR;";
+                string punteros;
+                SB superbloque;
+                fseek(search, opciones[i].part_start, SEEK_SET);
+                fread(&superbloque, sizeof(SB), 1, search);
+                char arrow = '0';
+                cout<< "Generando reporte, por favor espera..."<<endl;
+                for(int e = superbloque.s_bm_inode_start;e<superbloque.s_bm_inode_start+superbloque.s_inodes_count;e++){
+                    fseek(search, e, SEEK_SET);
+                    char byte;
+                    fread(&byte, 1, 1, search);
+                    if(byte=='1'){
+                        if(arrow=='1') punteros=punteros+"->";
+                        inode inodo;
+                        fseek(search, superbloque.s_inode_start+sizeof(inode)*(e-superbloque.s_bm_inode_start), SEEK_SET);
+                        fread(&inodo, sizeof(inode), 1, search);
+                        punteros=punteros+"inode"+to_string(e-superbloque.s_bm_inode_start);
+                        graph=graph+"inode"+to_string(e-superbloque.s_bm_inode_start)+" [label=<<table border=\"1\">";
+                        graph=graph+"<tr><td colspan=\"2\">Inodo_"+to_string(e-superbloque.s_bm_inode_start)+"</td></tr>";
+                        graph=graph+"<tr><td>i_uid</td><td>"+to_string(inodo.i_uid)+"</td></tr>";
+                        graph=graph+"<tr><td>i_gid</td><td>"+to_string(inodo.i_gid)+"</td></tr>";
+                        graph=graph+"<tr><td>i_size</td><td>"+to_string(inodo.i_size)+"</td></tr>";
+                        graph=graph+"<tr><td>i_atime</td><td>"+nameToString(inodo.i_atime)+"</td></tr>";
+                        graph=graph+"<tr><td>i_ctime</td><td>"+nameToString(inodo.i_ctime)+"</td></tr>";
+                        graph=graph+"<tr><td>i_mtime</td><td>"+nameToString(inodo.i_mtime)+"</td></tr>";
+                        for(int o=0;o<12;o++){
+                            graph=graph+"<tr><td>APD"+to_string(o)+"</td><td>"+to_string(inodo.i_block[o])+"</td></tr>";
+                        }
+                        graph=graph+"<tr><td>API1</td><td>"+to_string(inodo.i_block[12])+"</td></tr>";
+                        graph=graph+"<tr><td>API2</td><td>"+to_string(inodo.i_block[13])+"</td></tr>";
+                        graph=graph+"<tr><td>API3</td><td>"+to_string(inodo.i_block[14])+"</td></tr>";
+                        graph=graph+"<tr><td>i_type</td><td>"+to_string(inodo.i_type)+"</td></tr>";
+                        graph=graph+"<tr><td>i_perm</td><td>"+to_string(inodo.i_perm)+"</td></tr>";
+                        graph=graph+"</table>>];\n";
+                        arrow='1';
+                    }
+                }
+                Print(graph+punteros+";\n}", "Inodos");
+                cout << "Reporte generado exitosamente."<<endl;
                 return;
             }
         }
@@ -457,7 +519,33 @@ void _REP::graphSB(){
     for(int i =0;i<4;i++){
         if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
             if(name==nameToString(opciones[i].part_name)){
-
+                SB superbloque;
+                fseek(search, opciones[i].part_start, SEEK_SET);
+                fread(&superbloque, sizeof(SB), 1, search);
+                string graph = "digraph G {\n node [ shape=box fontname=Helvetica ] sb [label = <<table><tr><td colspan=\"2\">SuperBloque "+this->id+"</td></tr>";
+                graph=graph+"<tr><td>s_filesystem_type</td><td>"+to_string(superbloque.s_filesystem_type)+"</td></tr>";
+                graph=graph+"<tr><td>s_inodes_count</td><td>"+to_string(superbloque.s_inodes_count)+"</td></tr>";
+                graph=graph+"<tr><td>s_blocks_count</td><td>"+to_string(superbloque.s_blocks_count)+"</td></tr>";
+                graph=graph+"<tr><td>s_free_blocks_count</td><td>"+to_string(superbloque.s_free_blocks_count)+"</td></tr>";
+                graph=graph+"<tr><td>s_free_inodes_count</td><td>"+to_string(superbloque.s_free_inodes_count)+"</td></tr>";
+                graph=graph+"<tr><td>s_mtime</td><td>";
+                graph=graph+nameToString(superbloque.s_mtime);
+                graph=graph+"</td></tr>";
+                graph=graph+"<tr><td>s_umtime</td><td>";
+                graph=graph+nameToString(superbloque.s_umtime);
+                graph=graph+"</td></tr>";
+                graph=graph+"<tr><td>s_mnt_count</td><td>"+to_string(superbloque.s_mnt_count)+"</td></tr>";
+                graph=graph+"<tr><td>s_magic</td><td>"+to_string(superbloque.s_magic)+"</td></tr>";
+                graph=graph+"<tr><td>s_inode_size</td><td>"+to_string(superbloque.s_inode_size)+"</td></tr>";
+                graph=graph+"<tr><td>s_block_size</td><td>"+to_string(superbloque.s_block_size)+"</td></tr>";
+                graph=graph+"<tr><td>s_first_ino</td><td>"+to_string(superbloque.s_first_ino)+"</td></tr>";
+                graph=graph+"<tr><td>s_first_blo</td><td>"+to_string(superbloque.s_first_blo)+"</td></tr>";
+                graph=graph+"<tr><td>s_bm_inode_start</td><td>"+to_string(superbloque.s_bm_inode_start)+"</td></tr>";
+                graph=graph+"<tr><td>s_bm_block_start</td><td>"+to_string(superbloque.s_bm_block_start)+"</td></tr>";
+                graph=graph+"<tr><td>s_inode_start</td><td>"+to_string(superbloque.s_inode_start)+"</td></tr>";
+                graph=graph+"<tr><td>s_block_start</td><td>"+to_string(superbloque.s_block_start)+"</td></tr>";
+                graph=graph+"</table>>]\n}";
+                Print(graph, "SB");
                 return;
             }
         }

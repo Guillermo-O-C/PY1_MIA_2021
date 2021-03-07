@@ -106,7 +106,7 @@ void _MKDISK::exe(){
             cout<<"Disco Creado con éxito"<<endl;
         }else{
             cout << "file not found"<<endl;
-            string command = "mkdir -p \""+this->path+"\"";
+            string command = "mkdir -p -m=777 \""+this->path+"\"";//le agregué el -m=777 para que tenga todos los permisos
             system(command.c_str());
             command = "rmdir \'"+this->path+"\'";        
             system(command.c_str());

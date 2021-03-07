@@ -79,7 +79,10 @@ void _MKFS::exe(){
         diskSpot = (int)id[4]-65;
     }
     string name = discosMontados[diskSpot].particiones[partSpot].name; 
-
+    if(discosMontados[diskSpot].status==0){
+        cout <<"La partición indicada no se encuentra montada."<<endl;
+        return;
+    }
     FILE * search = fopen(discosMontados[diskSpot].path, "rb+");
     MBR mbr;
     fread(&mbr, sizeof(MBR), 1, search);
@@ -109,16 +112,16 @@ void _MKFS::exe(){
                 superBloque.s_free_inodes_count=n-2;
                 switch(this->fs){
                     case 2:
-                        superBloque.s_inode_start=sizeof(superBloque);
-                        superBloque.s_block_start=sizeof(superBloque)+n;
-                        superBloque.s_bm_inode_start=sizeof(superBloque)+2*n;
-                        superBloque.s_bm_block_start=sizeof(superBloque)+3*n;
+                        superBloque.s_bm_inode_start=opciones[i].part_start+sizeof(superBloque);
+                        superBloque.s_bm_block_start=opciones[i].part_start+sizeof(superBloque)+n;
+                        superBloque.s_inode_start=opciones[i].part_start+sizeof(superBloque)+4*n;
+                        superBloque.s_block_start=opciones[i].part_start+sizeof(superBloque)+4*n+n*sizeof(inode);
                         break;
                     case 3://contando el journaling
-                        superBloque.s_inode_start=sizeof(superBloque)+sizeof(Journaling)*n;
-                        superBloque.s_block_start=sizeof(superBloque)+sizeof(Journaling)*n+n;
-                        superBloque.s_bm_inode_start=sizeof(superBloque)+sizeof(Journaling)*n+2*n;
-                        superBloque.s_bm_block_start=sizeof(superBloque)+sizeof(Journaling)*n+3*n;
+                        superBloque.s_bm_inode_start=opciones[i].part_start+sizeof(superBloque)+sizeof(Journaling)*n;
+                        superBloque.s_bm_block_start=opciones[i].part_start+sizeof(superBloque)+sizeof(Journaling)*n+n;
+                        superBloque.s_inode_start=opciones[i].part_start+sizeof(superBloque)+sizeof(Journaling)*n+4*n;
+                        superBloque.s_block_start=opciones[i].part_start+sizeof(superBloque)+sizeof(Journaling)*n+4*n+n*sizeof(inode);
                         break;
                 }
                 fseek(search, opciones[i].part_start, SEEK_SET);
@@ -135,12 +138,14 @@ void _MKFS::exe(){
                     lastStart=lastStart+n*sizeof(Journaling);
                 }
                 //bitmap de inodos
+                cout << "inode bitmap stars in "<<to_string(lastStart)<<endl;
                 for(int e=lastStart;e<lastStart+n;e++){
                     fseek(search, e, SEEK_SET);
                     fwrite("0", 1, 1, search);
                     fflush(search);
                 }
                 lastStart=lastStart+n;
+                cout << "block bitmap stars in "<<to_string(lastStart)<<endl;
                 //bitmap de bloques
                 for(int e=lastStart;e<lastStart+3*n;e++){
                     fseek(search, e, SEEK_SET);
@@ -182,11 +187,11 @@ void _MKFS::exe(){
                 }
                 //crear carpeta raiz y archivo users.txt        
                 inode raiz;
-                strcpy(fechayhora,raiz.i_atime);
-                strcpy(fechayhora,raiz.i_ctime);
-                strcpy(fechayhora,raiz.i_mtime);
+                strcpy(raiz.i_atime,fechayhora);
+                strcpy(raiz.i_ctime,fechayhora);
+                strcpy(raiz.i_mtime,fechayhora);
                 raiz.i_block[0]=0;
-                fseek(search, superBloque.s_bm_inode_start, SEEK_SET);
+                fseek(search, superBloque.s_inode_start, SEEK_SET);
                 fwrite(&raiz, sizeof(inode), 1, search);
                 fflush(search);
                 //crear bloque de raiz
@@ -202,12 +207,12 @@ void _MKFS::exe(){
                 fflush(search);
                 //crear archivo
                 inode users;
-                strcpy(fechayhora,users.i_atime);
-                strcpy(fechayhora,users.i_ctime);
-                strcpy(fechayhora,users.i_mtime);
+                strcpy(users.i_atime,fechayhora);
+                strcpy(users.i_ctime,fechayhora);
+                strcpy(users.i_mtime,fechayhora);
                 users.i_type=1;
                 users.i_block[0]=0;
-                fseek(search, superBloque.s_bm_inode_start+sizeof(inode), SEEK_SET);
+                fseek(search, superBloque.s_inode_start+sizeof(inode), SEEK_SET);
                 fwrite(&users, sizeof(inode), 1, search);
                 fflush(search);
                 //crear contenido de users
@@ -216,16 +221,17 @@ void _MKFS::exe(){
                 fseek(search, superBloque.s_block_start+sizeof(folder_block), SEEK_SET);
                 fwrite(&root, sizeof(file_block), 1, search);
                 fflush(search);
-                fseek(search, superBloque.s_inode_size, SEEK_SET);
+                //marcar como usados en los bitmaps
+                fseek(search, superBloque.s_bm_inode_start, SEEK_SET);
                 fwrite("1", 1, 1, search);
                 fflush(search);
-                fseek(search, superBloque.s_inode_size+1, SEEK_SET);
+                fseek(search, superBloque.s_bm_inode_start+1, SEEK_SET);
                 fwrite("1", 1, 1, search);
                 fflush(search);
-                fseek(search, superBloque.s_block_start, SEEK_SET);
+                fseek(search, superBloque.s_bm_block_start, SEEK_SET);
                 fwrite("1", 1, 1, search);
                 fflush(search);
-                fseek(search, superBloque.s_block_start+1, SEEK_SET);
+                fseek(search, superBloque.s_bm_block_start+1, SEEK_SET);
                 fwrite("1", 1, 1, search);
                 fflush(search);
                 cout << "Se ha formateado el disco exitosasmente, ahora cuenta con un sistema de archivos EXT"+to_string(this->fs)+"."<<endl;

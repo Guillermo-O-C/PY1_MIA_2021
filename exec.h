@@ -25,12 +25,15 @@ void _EXEC::setPath(string path, bool isCadena){
 }
 void _EXEC::exe(){
     ifstream file(this->path);
-    if(!file) cout << "No se ha encontrado el script"<<endl;
+    if(!file) {
+        cout << "No se ha encontrado el script"<<endl;
+        return;
+    }
     string contenido, linea;
     YY_BUFFER_STATE buffer;
     while (getline(file, linea)) {
         cout << linea <<endl;
-        if(linea=="\n")continue;
+        if(linea=="")continue;
         if(linea[0]=='#')continue;
         buffer = yy_scan_string((linea+"\n").c_str());    
         if(yyparse()==0){
