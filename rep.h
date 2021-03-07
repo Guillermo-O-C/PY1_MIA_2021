@@ -83,19 +83,26 @@ void _REP::exe(){
     }
     if(this->name=="mbr"){
         graphMbr();
-    }else if(this->name=="disk"){
+    }
+    else if(this->name=="disk"){
         graphDisk();
-    }else if(this->name=="inode"){
+    }
+    else if(this->name=="inode"){
         graphInodos();
-    }else if(this->name=="block"){
+    }
+    else if(this->name=="block"){
         graphBlocks();
-    }else if(this->name=="bm_inode"){
+    }
+    else if(this->name=="bm_inode"){
         graphBM_Inodos();
-    }else if(this->name=="bm_block"){
+    }
+    else if(this->name=="bm_block"){
         graphBM_Blocks();
-    }else if(this->name=="tree"){
+    }
+    else if(this->name=="tree"){
         graphTree();
-    }else if(this->name=="sb"){
+    }
+    else if(this->name=="sb"){
         graphSB();
     }else{
         cout <<"No se reconoce el name "<<this->name<<" como un reporte." <<endl;
@@ -335,8 +342,7 @@ void _REP::graphBM_Blocks(){
                     fseek(search, e, SEEK_SET);
                     char byte;
                     fread(&byte, 1, 1, search);
-                    if(byte=='\0')cout<<to_string(e)<<" es null"<<endl;
-                    bitmap=bitmap+byte;
+                    bitmap=(byte!='0')?bitmap+'1':bitmap+'0';
                     row++;
                     if(row==20){
                         bitmap=bitmap+"\n";
@@ -453,7 +459,73 @@ void _REP::graphBlocks(){
     for(int i =0;i<4;i++){
         if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
             if(name==nameToString(opciones[i].part_name)){
-
+                string graph= "digraph G {\nnode[ shape=box fontname=Helvetica ] rankdir = LR;";
+                string punteros;
+                SB superbloque;
+                fseek(search, opciones[i].part_start, SEEK_SET);
+                fread(&superbloque, sizeof(SB), 1, search);
+                char arrow = '0';
+                cout<< "Generando reporte, por favor espera..."<<endl;
+                for(int e = superbloque.s_bm_block_start;e<superbloque.s_bm_block_start+superbloque.s_blocks_count;e++){
+                    fseek(search, e, SEEK_SET);
+                    char byte;
+                    fread(&byte, 1, 1, search);
+                    if(byte=='1'){//carpetas
+                        if(arrow=='1') punteros=punteros+"->";
+                        folder_block folder;
+                        fseek(search, superbloque.s_block_start+sizeof(inode)*(e-superbloque.s_bm_block_start), SEEK_SET);
+                        fread(&folder, sizeof(folder_block), 1, search);
+                        punteros=punteros+"block"+to_string(e-superbloque.s_bm_block_start);
+                        graph=graph+"block"+to_string(e-superbloque.s_bm_block_start)+" [label=<<table border=\"1\">";
+                        graph=graph+"<tr><td colspan=\"2\">Block_"+to_string(e-superbloque.s_bm_block_start)+"</td></tr>";
+                        for(int o=0;o<4;o++){
+                            graph=graph+"<tr><td>"+folderToString(folder.b_content[o].b_name)+"</td><td>"+to_string(folder.b_content[o].b_inodo)+"</td></tr>";
+                        }
+                        graph=graph+"</table>>];\n";
+                        arrow='1';
+                    }
+                    else if(byte=='2'){//contenido
+                        if(arrow=='1') punteros=punteros+"->";
+                        file_block file;
+                        fseek(search, superbloque.s_block_start+64*(e-superbloque.s_bm_block_start), SEEK_SET);
+                        fread(&file, sizeof(file_block), 1, search);
+                        punteros=punteros+"block"+to_string(e-superbloque.s_bm_block_start);
+                        graph=graph+"block"+to_string(e-superbloque.s_bm_block_start)+" [label=<<table border=\"1\">";
+                        string fileContent="";
+                        int relleno=0;
+                        for(int o=0;o<64;o++){
+                            if(file.b_content[o]=='\0'){
+                                if(relleno==9)relleno=0;
+                                fileContent=fileContent+to_string(relleno);
+                                continue;
+                            }
+                            fileContent=fileContent+file.b_content[o];
+                        }
+                        graph=graph+"<tr><td >Block_"+to_string(e-superbloque.s_bm_block_start)+"</td></tr>";
+                        graph=graph+"<tr><td>"+file.b_content+"</td></tr>";
+                        graph=graph+"</table>>];\n";
+                        arrow='1';
+                    }
+                    else if(byte=='3'){//punteros
+                        if(arrow=='1') punteros=punteros+"->";
+                        pointers apuntadores;
+                        fseek(search, superbloque.s_block_start+sizeof(inode)*(e-superbloque.s_bm_block_start), SEEK_SET);
+                        fread(&apuntadores, sizeof(file_block), 1, search);
+                        punteros=punteros+"block"+to_string(e-superbloque.s_bm_inode_start);
+                        graph=graph+"block"+to_string(e-superbloque.s_bm_inode_start)+" [label=<<table border=\"1\">";
+                        graph=graph+"<tr><td colspan=\"2\">Block_"+to_string(e-superbloque.s_bm_inode_start)+"</td></tr>";
+                        for(int o=0;o<12;o++){
+                            graph=graph+"<tr><td>APD"+to_string(o)+"</td><td>"+to_string(apuntadores.b_pointers[o])+"</td></tr>";
+                        }
+                        graph=graph+"<tr><td>API1</td><td>"+to_string(apuntadores.b_pointers[12])+"</td></tr>";
+                        graph=graph+"<tr><td>API2</td><td>"+to_string(apuntadores.b_pointers[13])+"</td></tr>";
+                        graph=graph+"<tr><td>API3</td><td>"+to_string(apuntadores.b_pointers[14])+"</td></tr>";
+                        graph=graph+"</table>>];\n";
+                        arrow='1';
+                    }
+                }
+                Print(graph+punteros+";\n}", "Inodos");
+                cout << "Reporte generado exitosamente."<<endl;
                 return;
             }
         }
@@ -573,7 +645,6 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
             int sizePrinted=0;
             for(int i =0;i<13;i++){
                 file_block file;
-                cout << "se obtiene el contend del bloque "<<to_string(inodo.i_block[i])<<endl;
                 fseek(search, superbloque.s_block_start+inodo.i_block[i]*64, SEEK_SET);
                 fread(&file, 64, 1, search);
                 string fileContent="";
@@ -584,7 +655,6 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
                         sizePrinted++;
                     }
                 }else{
-                    cout << "solo quedan por imprimir "+to_string(inodo.i_size-sizePrinted)<<endl;
                     for(int e =0;e<28;e++){
                         if(file.b_content[e]=='\n')continue;
                         fileContent=fileContent+file.b_content[e];

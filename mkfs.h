@@ -233,7 +233,7 @@ void _MKFS::exe(){
                 fwrite("1", 1, 1, search);
                 fflush(search);
                 fseek(search, superBloque.s_bm_block_start+1, SEEK_SET);
-                fwrite("1", 1, 1, search);
+                fwrite("2", 1, 1, search);
                 fflush(search);
                 cout << "Se ha formateado el disco exitosasmente, ahora cuenta con un sistema de archivos EXT"+to_string(this->fs)+"."<<endl;
                 return;
