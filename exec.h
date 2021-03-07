@@ -30,6 +30,8 @@ void _EXEC::exe(){
     YY_BUFFER_STATE buffer;
     while (getline(file, linea)) {
         cout << linea <<endl;
+        if(linea=="\n")continue;
+        if(linea[0]=='#')continue;
         buffer = yy_scan_string((linea+"\n").c_str());    
         if(yyparse()==0){
             //parse correcto

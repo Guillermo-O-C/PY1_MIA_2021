@@ -4,6 +4,7 @@
 using namespace std;
 #include "mbr.h"
 #include "mountStructs.h"
+#include "partitionStructs.h"
 
 
 class _REP{
@@ -13,7 +14,8 @@ class _REP{
     string id;
     string ruta;
     string diskPath;
-    int partitionSpot;
+    int partSpot;
+    int diskSpot;
     public:
     _REP(){
         this->name="";
@@ -29,6 +31,14 @@ class _REP{
     void graphDisk();
     void Print(string content, string name);
     string toLowerCase(string cadena);
+    void graphBM_Inodos();
+    void graphBM_Blocks();
+    void graphInodos();
+    void graphBlocks();
+    void graphTree();
+    void graphSB();
+    string toUpperCase(string cadena);
+    string nameToString(char * name);
 };
 
 void _REP::setPath(string path, bool isCadena){
@@ -42,7 +52,7 @@ void _REP::setName(string name){
     this->name=toLowerCase(name);
 };
 void _REP::setId(string id){
-    this->id=id;
+    this->id=toUpperCase(id);
     int diskSpot = (int)id[3]-65;
     int partSpot=id[2]-'0';//se le resta uno para obotener la posición en el array
     partSpot--;
@@ -52,7 +62,8 @@ void _REP::setId(string id){
         diskSpot = (int)id[4]-65;
     }
     this->diskPath=discosMontados[diskSpot].path;
-    this->partitionSpot=partSpot;
+    this->diskSpot=diskSpot;
+    this->partSpot=partSpot;
 };
 void _REP::setRuta(string ruta){
     this->ruta=ruta;
@@ -72,6 +83,21 @@ void _REP::exe(){
         graphMbr();
     }else if(this->name=="disk"){
         graphDisk();
+    }else if(this->name=="inode"){
+        graphInodos();
+    }else if(this->name=="block"){
+        graphBlocks();
+    }else if(this->name=="bm_inode"){
+        graphBM_Inodos();
+    }else if(this->name=="bm_block"){
+        graphBM_Blocks();
+    }else if(this->name=="tree"){
+        graphTree();
+    }else if(this->name=="sb"){
+        graphSB();
+    }else{
+        cout <<"No se reconoce el name "<<this->name<<" como un reporte." <<endl;
+        return;
     }
 };
 
@@ -118,7 +144,6 @@ void _REP::graphMbr(){
         fread(&ebr, sizeof(EBR), 1, search);
         int i =1;
         while(true){
-            cout << "this next is at "+to_string(ebr.part_next)<<endl;
             graph=graph+"ebr"+to_string(i)+"[label=<<table>";
             graph=graph+"<tr><td colspan=\"2\">EBR_"+to_string(i)+"</td></tr>";
             graph=graph+"<tr><td>Nombre</td><td>Valor</td></tr>";
@@ -233,6 +258,230 @@ void _REP::graphDisk(){
     fclose(search);
 }
 
+void _REP::graphBM_Inodos(){
+    FILE *search =  fopen(this->diskPath.c_str(), "rb+");
+    MBR mbr;
+    fread(&mbr, sizeof(MBR), 1, search);
+    partition opciones[4] = {mbr.mbr_partition_1, mbr.mbr_partition_2, mbr.mbr_partition_3,mbr.mbr_partition_4};
+    string name = discosMontados[this->diskSpot].particiones[this->partSpot].name; 
+    for(int i =0;i<4;i++){
+        if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
+            if(name==nameToString(opciones[i].part_name)){
+                string bitmap="";
+                SB superbloque;
+                fseek(search, opciones[i].part_start, SEEK_SET);
+                fread(&superbloque, sizeof(SB), 1, search);
+                int row=0;
+                for(int e = superbloque.s_inode_start;e<superbloque.s_inode_start+superbloque.s_inodes_count-superbloque.s_free_inodes_count;e=e++){
+                    fseek(search, e, SEEK_SET);
+                    char byte;
+                    fread(&byte, 1, 1, search);
+                    bitmap=bitmap+byte;
+                    row++;
+                    if(row==20){
+                        bitmap=bitmap+"\n";
+                        row=0;
+                    }
+                }
+                ofstream graphFile;
+                graphFile.open(this->path.substr(0, this->path.length()-4)+".txt");
+                graphFile << bitmap;
+                graphFile.close();
+                cout << "Reporte generado exitosamente."<<endl;
+                return;
+            }
+        }
+    }
+    if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type=='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type=='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type=='e' && mbr.mbr_partition_4.part_status=='1'){
+        partition extendida = (mbr.mbr_partition_1.part_type=='e')?mbr.mbr_partition_1:(mbr.mbr_partition_2.part_type=='e')?mbr.mbr_partition_2:(mbr.mbr_partition_3.part_type=='e')?mbr.mbr_partition_3:mbr.mbr_partition_4;
+        EBR ebr;
+        int anterior;
+        fseek(search, extendida.part_start, SEEK_SET);
+        fread(&ebr, sizeof(EBR), 1, search);
+        while(true){
+            if(name==nameToString(ebr.part_name) && ebr.part_status=='1'){
+                
+            }
+            if(ebr.part_next==-1){
+                break;
+            }
+            anterior = ebr.part_start;
+            fseek(search, ebr.part_next, SEEK_SET);
+            fread(&ebr, sizeof(EBR), 1, search);
+        }
+    }
+};
+
+void _REP::graphBM_Blocks(){
+    FILE *search =  fopen(this->diskPath.c_str(), "rb+");
+    MBR mbr;
+    fread(&mbr, sizeof(MBR), 1, search);
+    partition opciones[4] = {mbr.mbr_partition_1, mbr.mbr_partition_2, mbr.mbr_partition_3,mbr.mbr_partition_4};
+    string name = discosMontados[diskSpot].particiones[partSpot].name; 
+    for(int i =0;i<4;i++){
+        if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
+            if(name==nameToString(opciones[i].part_name)){
+
+                return;
+            }
+        }
+    }
+    if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type=='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type=='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type=='e' && mbr.mbr_partition_4.part_status=='1'){
+        partition extendida = (mbr.mbr_partition_1.part_type=='e')?mbr.mbr_partition_1:(mbr.mbr_partition_2.part_type=='e')?mbr.mbr_partition_2:(mbr.mbr_partition_3.part_type=='e')?mbr.mbr_partition_3:mbr.mbr_partition_4;
+        EBR ebr;
+        int anterior;
+        fseek(search, extendida.part_start, SEEK_SET);
+        fread(&ebr, sizeof(EBR), 1, search);
+        while(true){
+            if(name==nameToString(ebr.part_name) && ebr.part_status=='1'){
+                
+            }
+            if(ebr.part_next==-1){
+                break;
+            }
+            anterior = ebr.part_start;
+            fseek(search, ebr.part_next, SEEK_SET);
+            fread(&ebr, sizeof(EBR), 1, search);
+        }
+    }
+};
+
+void _REP::graphInodos(){
+    FILE *search =  fopen(this->diskPath.c_str(), "rb+");
+    MBR mbr;
+    fread(&mbr, sizeof(MBR), 1, search);
+    partition opciones[4] = {mbr.mbr_partition_1, mbr.mbr_partition_2, mbr.mbr_partition_3,mbr.mbr_partition_4};
+    string name = discosMontados[diskSpot].particiones[partSpot].name; 
+    for(int i =0;i<4;i++){
+        if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
+            if(name==nameToString(opciones[i].part_name)){
+
+                return;
+            }
+        }
+    }
+    if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type=='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type=='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type=='e' && mbr.mbr_partition_4.part_status=='1'){
+        partition extendida = (mbr.mbr_partition_1.part_type=='e')?mbr.mbr_partition_1:(mbr.mbr_partition_2.part_type=='e')?mbr.mbr_partition_2:(mbr.mbr_partition_3.part_type=='e')?mbr.mbr_partition_3:mbr.mbr_partition_4;
+        EBR ebr;
+        int anterior;
+        fseek(search, extendida.part_start, SEEK_SET);
+        fread(&ebr, sizeof(EBR), 1, search);
+        while(true){
+            if(name==nameToString(ebr.part_name) && ebr.part_status=='1'){
+                
+            }
+            if(ebr.part_next==-1){
+                break;
+            }
+            anterior = ebr.part_start;
+            fseek(search, ebr.part_next, SEEK_SET);
+            fread(&ebr, sizeof(EBR), 1, search);
+        }
+    }
+};
+
+void _REP::graphBlocks(){
+    FILE *search =  fopen(this->diskPath.c_str(), "rb+");
+    MBR mbr;
+    fread(&mbr, sizeof(MBR), 1, search);
+    partition opciones[4] = {mbr.mbr_partition_1, mbr.mbr_partition_2, mbr.mbr_partition_3,mbr.mbr_partition_4};
+    string name = discosMontados[diskSpot].particiones[partSpot].name; 
+    for(int i =0;i<4;i++){
+        if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
+            if(name==nameToString(opciones[i].part_name)){
+
+                return;
+            }
+        }
+    }
+    if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type=='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type=='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type=='e' && mbr.mbr_partition_4.part_status=='1'){
+        partition extendida = (mbr.mbr_partition_1.part_type=='e')?mbr.mbr_partition_1:(mbr.mbr_partition_2.part_type=='e')?mbr.mbr_partition_2:(mbr.mbr_partition_3.part_type=='e')?mbr.mbr_partition_3:mbr.mbr_partition_4;
+        EBR ebr;
+        int anterior;
+        fseek(search, extendida.part_start, SEEK_SET);
+        fread(&ebr, sizeof(EBR), 1, search);
+        while(true){
+            if(name==nameToString(ebr.part_name) && ebr.part_status=='1'){
+                
+            }
+            if(ebr.part_next==-1){
+                break;
+            }
+            anterior = ebr.part_start;
+            fseek(search, ebr.part_next, SEEK_SET);
+            fread(&ebr, sizeof(EBR), 1, search);
+        }
+    }
+};
+
+void _REP::graphTree(){
+    FILE *search =  fopen(this->diskPath.c_str(), "rb+");
+    MBR mbr;
+    fread(&mbr, sizeof(MBR), 1, search);
+    partition opciones[4] = {mbr.mbr_partition_1, mbr.mbr_partition_2, mbr.mbr_partition_3,mbr.mbr_partition_4};
+    string name = discosMontados[diskSpot].particiones[partSpot].name; 
+    for(int i =0;i<4;i++){
+        if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
+            if(name==nameToString(opciones[i].part_name)){
+
+                return;
+            }
+        }
+    }
+    if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type=='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type=='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type=='e' && mbr.mbr_partition_4.part_status=='1'){
+        partition extendida = (mbr.mbr_partition_1.part_type=='e')?mbr.mbr_partition_1:(mbr.mbr_partition_2.part_type=='e')?mbr.mbr_partition_2:(mbr.mbr_partition_3.part_type=='e')?mbr.mbr_partition_3:mbr.mbr_partition_4;
+        EBR ebr;
+        int anterior;
+        fseek(search, extendida.part_start, SEEK_SET);
+        fread(&ebr, sizeof(EBR), 1, search);
+        while(true){
+            if(name==nameToString(ebr.part_name) && ebr.part_status=='1'){
+                
+            }
+            if(ebr.part_next==-1){
+                break;
+            }
+            anterior = ebr.part_start;
+            fseek(search, ebr.part_next, SEEK_SET);
+            fread(&ebr, sizeof(EBR), 1, search);
+        }
+    }
+};
+
+void _REP::graphSB(){
+    FILE *search =  fopen(this->diskPath.c_str(), "rb+");
+    MBR mbr;
+    fread(&mbr, sizeof(MBR), 1, search);
+    partition opciones[4] = {mbr.mbr_partition_1, mbr.mbr_partition_2, mbr.mbr_partition_3,mbr.mbr_partition_4};
+    string name = discosMontados[diskSpot].particiones[partSpot].name; 
+    for(int i =0;i<4;i++){
+        if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
+            if(name==nameToString(opciones[i].part_name)){
+
+                return;
+            }
+        }
+    }
+    if(mbr.mbr_partition_1.part_type=='e' && mbr.mbr_partition_1.part_status=='1' || mbr.mbr_partition_2.part_type=='e' && mbr.mbr_partition_2.part_status=='1' || mbr.mbr_partition_3.part_type=='e' && mbr.mbr_partition_3.part_status=='1' || mbr.mbr_partition_4.part_type=='e' && mbr.mbr_partition_4.part_status=='1'){
+        partition extendida = (mbr.mbr_partition_1.part_type=='e')?mbr.mbr_partition_1:(mbr.mbr_partition_2.part_type=='e')?mbr.mbr_partition_2:(mbr.mbr_partition_3.part_type=='e')?mbr.mbr_partition_3:mbr.mbr_partition_4;
+        EBR ebr;
+        int anterior;
+        fseek(search, extendida.part_start, SEEK_SET);
+        fread(&ebr, sizeof(EBR), 1, search);
+        while(true){
+            if(name==nameToString(ebr.part_name) && ebr.part_status=='1'){
+                
+            }
+            if(ebr.part_next==-1){
+                break;
+            }
+            anterior = ebr.part_start;
+            fseek(search, ebr.part_next, SEEK_SET);
+            fread(&ebr, sizeof(EBR), 1, search);
+        }
+    }
+};
+
 void _REP::Print(string content, string name){
     FILE *searchFile =  fopen((this->path.substr(0, this->path.length()-4)+".txt").c_str(), "wb+");
     if(searchFile==NULL){
@@ -258,6 +507,18 @@ void _REP::Print(string content, string name){
     cout <<"Reporte Generado con éxito."<<endl;
 }
 
+string _REP::toUpperCase(string cadena){
+    string lowered="";
+    for (char c : cadena){
+        if(97<=int(c) && int(c)<=122){
+            lowered+=char(int(c)-32);
+        }else{
+            lowered+=c;
+        }
+    }
+    return lowered;
+}
+
 string _REP::toLowerCase(string cadena){
     string lowered="";
     for (char c : cadena){
@@ -268,4 +529,13 @@ string _REP::toLowerCase(string cadena){
         }
     }
     return lowered;
+}
+
+string _REP::nameToString(char * name){
+    string str;
+    for(int i=0;i < 16;i++){
+        if(name[i]==int(NULL)) break;
+        str=str+name[i];
+    }
+    return str;
 }

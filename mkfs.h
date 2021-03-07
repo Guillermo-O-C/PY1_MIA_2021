@@ -89,7 +89,7 @@ void _MKFS::exe(){
         if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
             if(name==nameToString(opciones[i].part_name)){//se encontró la partición
                 int n = getN(opciones[i].part_size);
-                cout << "n="<<to_string(n)<<endl;
+                //cout << "n="<<to_string(n)<<endl;
                 superBloque.s_filesystem_type=this->fs;
                 time_t t;
                 struct tm *tm;
@@ -101,12 +101,12 @@ void _MKFS::exe(){
                 superBloque.s_magic=0xEF53;
                 superBloque.s_inode_size=sizeof(inode);
                 superBloque.s_block_size=64;
-                superBloque.s_first_ino=0;
-                superBloque.s_first_blo=0;
+                superBloque.s_first_ino=2;//0 es de raiz y 1 es de users.txt
+                superBloque.s_first_blo=2;//0 es bloque de carpeta de raiz y 1 es de contenido para users.txt 
                 superBloque.s_inodes_count=n;
                 superBloque.s_blocks_count=3*n;
-                superBloque.s_free_blocks_count=3*n;
-                superBloque.s_free_inodes_count=n;
+                superBloque.s_free_blocks_count=3*n-2;
+                superBloque.s_free_inodes_count=n-2;
                 switch(this->fs){
                     case 2:
                         superBloque.s_inode_start=sizeof(superBloque);
@@ -186,16 +186,50 @@ void _MKFS::exe(){
                 strcpy(fechayhora,raiz.i_ctime);
                 strcpy(fechayhora,raiz.i_mtime);
                 raiz.i_block[0]=0;
+                fseek(search, superBloque.s_bm_inode_start, SEEK_SET);
+                fwrite(&raiz, sizeof(inode), 1, search);
+                fflush(search);
                 //crear bloque de raiz
-                folder_block home;
-                strcpy(home.b_content[0].b_name,".");
-                home.b_content[0].b_inodo=0;
-                strcpy(home.b_content[1].b_name,"..");
-                home.b_content[1].b_inodo=0;
-                strcpy(home.b_content[2].b_name,"users.txt");
-                home.b_content[2].b_inodo=1;
+                folder_block raizBlock;
+                strcpy(raizBlock.b_content[0].b_name,".");
+                raizBlock.b_content[0].b_inodo=0;
+                strcpy(raizBlock.b_content[1].b_name,"..");
+                raizBlock.b_content[1].b_inodo=0;
+                strcpy(raizBlock.b_content[2].b_name,"users.txt");
+                raizBlock.b_content[2].b_inodo=1;
+                fseek(search, superBloque.s_block_start, SEEK_SET);
+                fwrite(&raizBlock, sizeof(folder_block), 1, search);
+                fflush(search);
                 //crear archivo
                 inode users;
+                strcpy(fechayhora,users.i_atime);
+                strcpy(fechayhora,users.i_ctime);
+                strcpy(fechayhora,users.i_mtime);
+                users.i_type=1;
+                users.i_block[0]=0;
+                fseek(search, superBloque.s_bm_inode_start+sizeof(inode), SEEK_SET);
+                fwrite(&users, sizeof(inode), 1, search);
+                fflush(search);
+                //crear contenido de users
+                file_block root;
+                strcpy(root.b_content,"1,G,root\n1,U,root,root,123\n");
+                fseek(search, superBloque.s_block_start+sizeof(folder_block), SEEK_SET);
+                fwrite(&root, sizeof(file_block), 1, search);
+                fflush(search);
+                fseek(search, superBloque.s_inode_size, SEEK_SET);
+                fwrite("1", 1, 1, search);
+                fflush(search);
+                fseek(search, superBloque.s_inode_size+1, SEEK_SET);
+                fwrite("1", 1, 1, search);
+                fflush(search);
+                fseek(search, superBloque.s_block_start, SEEK_SET);
+                fwrite("1", 1, 1, search);
+                fflush(search);
+                fseek(search, superBloque.s_block_start+1, SEEK_SET);
+                fwrite("1", 1, 1, search);
+                fflush(search);
+                cout << "Se ha formateado el disco exitosasmente, ahora cuenta con un sistema de archivos EXT"+to_string(this->fs)+"."<<endl;
+                return;
             } 
         }        
     }

@@ -33,15 +33,15 @@ struct SB {
 };
 
 struct inode{
-    int i_uid=0;
-    int i_gid=0;
+    int i_uid=1;
+    int i_gid=1;
     int i_size=0;
     char i_atime[16]="";
     char i_ctime[16]="";
     char i_mtime[16]="";
     int i_block[16]={-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
     char i_type=0;
-    int i_perm=777;
+    int i_perm=664;
 };
 
 struct content
