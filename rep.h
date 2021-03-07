@@ -39,6 +39,8 @@ class _REP{
     void graphSB();
     string toUpperCase(string cadena);
     string nameToString(char * name);
+    string recorrerArbol(FILE* search,SB superbloque, inode inodo, string content, int inodoNo);
+    string folderToString(char * name);
 };
 
 void _REP::setPath(string path, bool isCadena){
@@ -485,7 +487,16 @@ void _REP::graphTree(){
     for(int i =0;i<4;i++){
         if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
             if(name==nameToString(opciones[i].part_name)){
-
+                string punteros;
+                SB superbloque;
+                fseek(search, opciones[i].part_start, SEEK_SET);
+                fread(&superbloque, sizeof(SB), 1, search);
+                string graph="digraph structs {\nnode [shape=plaintext]\nrankdir=LR;\n";
+                inode raiz;
+                fseek(search, superbloque.s_inode_start, SEEK_SET);
+                fread(&raiz, sizeof(inode), 1, search);
+                graph = recorrerArbol(search,superbloque, raiz, graph, 0);
+                Print(graph+"\n}", "Tree");
                 return;
             }
         }
@@ -509,6 +520,93 @@ void _REP::graphTree(){
         }
     }
 };
+
+string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string content, int inodeNo){
+    //color inodo 54b4eb, content f7de1b, carpetas 04ff00, apuntadores ff8c00
+    content=content+"inode"+to_string(inodeNo)+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#54b4eb\"><tr><td colspan=\"2\">Inodo_"+to_string(inodeNo)+"</td></tr>";    
+    if(inodo.i_type==0){
+        content=content+"<tr><td>tipo</td><td>0</td></tr>";
+        content=content+"<tr><td>tamaño</td><td>0</td></tr>";
+        for(int i =0;i<13;i++){
+            content=content+"<tr><td>APD"+to_string(i)+"</td><td PORT=\"f"+to_string(i)+"\">"+to_string(inodo.i_block[i])+"</td></tr>";       
+        }
+        content=content+"<tr><td>API"+to_string(1)+"</td><td PORT=\"f"+to_string(13)+"\">"+to_string(inodo.i_block[13])+"</td></tr>";
+        content=content+"<tr><td>API"+to_string(2)+"</td><td PORT=\"f"+to_string(14)+"\">"+to_string(inodo.i_block[14])+"</td></tr>";
+        content=content+"<tr><td>API"+to_string(3)+"</td><td PORT=\"f"+to_string(15)+"\">"+to_string(inodo.i_block[15])+"</td></tr></table>>];";
+        for(int i =0;i<13;i++){
+            if(inodo.i_block[i]!=-1){
+                //existe una carpeta
+                content=content+"\ninode"+to_string(inodeNo)+":f"+to_string(i)+"->folder"+to_string(inodo.i_block[i])+";\n";
+                content=content+"folder"+to_string(inodo.i_block[i])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#04ff00\">";
+                content=content+"<tr><td colspan=\"2\">Bloque_"+to_string(inodo.i_block[i])+"</td></tr>";
+                folder_block folder;
+                fseek(search, superbloque.s_block_start+inodo.i_block[i]*64, SEEK_SET);
+                fread(&folder, 64, 1, search);
+                for(int e =0;e<4;e++){
+                    content=content+"<tr><td>"+folderToString(folder.b_content[e].b_name)+"</td><td PORT=\"f"+to_string(e)+"\">"+to_string(folder.b_content[e].b_inodo)+"</td></tr>";
+                }
+                content=content+"</table>>];";  
+                for(int e =0;e<4;e++){
+                    if(folder.b_content[e].b_inodo!=-1){
+                        if(inodo.i_block[i]==folder.b_content[e].b_inodo)continue;//se tiene que condicionar más
+                        content=content+"folder"+to_string(inodo.i_block[i])+":f"+to_string(e)+"->inode"+to_string(folder.b_content[e].b_inodo)+";\n";
+                        fseek(search, superbloque.s_inode_start+folder.b_content[e].b_inodo*sizeof(inode),SEEK_SET);
+                        inode next;
+                        fread(&next, sizeof(inode), 1, search);
+                        content = recorrerArbol(search, superbloque, next, content, folder.b_content[e].b_inodo);
+                    }                    
+                }      
+            }
+        }
+    }
+    else{
+        content=content+"<tr><td>tipo</td><td>1</td></tr>";
+        content=content+"<tr><td>tamaño</td><td>"+to_string(inodo.i_size)+"</td></tr>";
+        for(int i =0;i<13;i++){
+            content=content+"<tr><td>APD"+to_string(i)+"</td><td PORT=\"f"+to_string(i)+"\">"+to_string(inodo.i_block[i])+"</td></tr>";       
+        }
+        content=content+"<tr><td>API"+to_string(1)+"</td><td PORT=\"f"+to_string(13)+"\">"+to_string(inodo.i_block[13])+"</td></tr>";
+        content=content+"<tr><td>API"+to_string(2)+"</td><td PORT=\"f"+to_string(14)+"\">"+to_string(inodo.i_block[14])+"</td></tr>";
+        content=content+"<tr><td>API"+to_string(3)+"</td><td PORT=\"f"+to_string(15)+"\">"+to_string(inodo.i_block[15])+"</td></tr></table>>];";
+        if(inodo.i_size!=0){
+            //existe un archivo
+            int sizePrinted=0;
+            for(int i =0;i<13;i++){
+                file_block file;
+                cout << "se obtiene el contend del bloque "<<to_string(inodo.i_block[i])<<endl;
+                fseek(search, superbloque.s_block_start+inodo.i_block[i]*64, SEEK_SET);
+                fread(&file, 64, 1, search);
+                string fileContent="";
+                if(inodo.i_size-sizePrinted>64){
+                    //imprime los 64 bytes del bloque
+                    for(int e =0;e<64;e++){
+                        fileContent=fileContent+file.b_content[e];
+                        sizePrinted++;
+                    }
+                }else{
+                    cout << "solo quedan por imprimir "+to_string(inodo.i_size-sizePrinted)<<endl;
+                    for(int e =0;e<28;e++){
+                        if(file.b_content[e]=='\n')continue;
+                        fileContent=fileContent+file.b_content[e];
+                    }
+                    int relleno=0;
+                    for(int e =inodo.i_size-sizePrinted;e<64;e++){
+                        fileContent=fileContent+to_string(relleno);
+                        if(relleno==9)relleno=0;
+                        relleno++;
+                    }
+                    sizePrinted=inodo.i_size;
+                }
+                content=content+"inode"+to_string(inodeNo)+":f"+to_string(i)+"->file"+to_string(inodo.i_block[i])+";";
+                content=content+"file"+to_string(inodo.i_block[i])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#f7de1b\">";
+                content=content+"<tr><td>BLOQUE_"+to_string(inodo.i_block[i])+"</td></tr>";
+                content=content+"<tr><td>"+fileContent.c_str()+"</td></tr></table>>]";
+                if(sizePrinted==inodo.i_size)break;
+            } 
+        }
+    }
+    return content;
+}
 
 void _REP::graphSB(){
     FILE *search =  fopen(this->diskPath.c_str(), "rb+");
@@ -622,6 +720,15 @@ string _REP::toLowerCase(string cadena){
 string _REP::nameToString(char * name){
     string str;
     for(int i=0;i < 16;i++){
+        if(name[i]==int(NULL)) break;
+        str=str+name[i];
+    }
+    return str;
+}
+
+string _REP::folderToString(char * name){
+    string str;
+    for(int i=0;i < 12;i++){
         if(name[i]==int(NULL)) break;
         str=str+name[i];
     }

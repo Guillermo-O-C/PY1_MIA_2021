@@ -211,7 +211,8 @@ void _MKFS::exe(){
                 strcpy(users.i_ctime,fechayhora);
                 strcpy(users.i_mtime,fechayhora);
                 users.i_type=1;
-                users.i_block[0]=0;
+                users.i_block[0]=1;
+                users.i_size=sizeof("1,G,root\n1,U,root,root,123\n");
                 fseek(search, superBloque.s_inode_start+sizeof(inode), SEEK_SET);
                 fwrite(&users, sizeof(inode), 1, search);
                 fflush(search);

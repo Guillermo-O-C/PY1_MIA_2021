@@ -46,7 +46,7 @@ struct inode{
 
 struct content
 {
-    char b_name[16]="";
+    char b_name[12]="";
     int b_inodo=-1;
 };
 
