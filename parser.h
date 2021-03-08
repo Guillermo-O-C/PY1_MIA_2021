@@ -69,8 +69,8 @@ extern int yydebug;
     mkfs = 275,
     id = 276,
     fs = 277,
-    usuario = 278,
-    password = 279,
+    usr = 278,
+    pwd = 279,
     login = 280,
     logout = 281,
     mkgrp = 282,
@@ -93,7 +93,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 93 "gramatica.y"
+#line 97 "gramatica.y"
 
     char*STRING;
     char*NUM;

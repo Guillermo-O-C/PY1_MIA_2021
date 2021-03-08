@@ -13,6 +13,7 @@
 #include "exec.h"
 #include "mount.h"
 #include "mkfs.h"
+#include "login.h"
 
 using namespace std;
 extern int yylex(void);
@@ -29,6 +30,7 @@ _REP * repV;
 _EXEC * execV;
 _MOUNT * mountV;
 _MKFS * mkfsV;
+_LOGIN *loginV;
 %}
 
 %start INIT
@@ -53,8 +55,8 @@ _MKFS * mkfsV;
 %token<STRING> mkfs
 %token<STRING> id
 %token<STRING> fs
-%token<STRING> usuario
-%token<STRING> password
+%token<STRING> usr
+%token<STRING> pwd
 %token<STRING> login
 %token<STRING> logout
 %token<STRING> mkgrp
@@ -86,6 +88,8 @@ _MKFS * mkfsV;
 %type<STRING> MOUNTPARAM
 %type<STRING> MKFSP
 %type<STRING> MKFSPARAM
+%type<STRING> LOGINP
+%type<STRING> LOGINPARAM
 
 %define parse.error verbose
 %locations
@@ -116,6 +120,8 @@ INSTRUCCION:
     | mount {mountV = new _MOUNT();} MOUNTP {mountV->exe();/*realiza la eliminación del disco*/}
     | unmount guion R_id igual partition_id {mountV->unmount($5); }
     | mkfs {mkfsV = new _MKFS();} MKFSP {mkfsV->exe();}
+    | login {loginV = new _LOGIN();} LOGINP {loginV->exe();}
+    | logout {loginV->logout();} 
     | error {std::cout << "error";}
 ;
 
@@ -194,6 +200,21 @@ MKFSPARAM :
         guion R_id igual partition_id {mkfsV->setId($4);}
     |   guion type igual id {mkfsV->setType($4);}
     |   guion fs igual numero fs {mkfsV->setFs(atoi($4)); }
+;
+
+LOGINP:
+    LOGINP LOGINPARAM
+    | LOGINPARAM
+;
+
+LOGINPARAM :
+        guion R_id igual partition_id {loginV->setId($4);}
+    |   guion usr igual id {loginV->setUsr($4, false);}
+    |   guion usr igual cadena {loginV->setUsr($4, true);}
+    |   guion pwd igual id {loginV->setPwd($4,"", false); }
+    |   guion pwd igual numero id {loginV->setPwd($4,$5, false); }
+    |   guion pwd igual numero {loginV->setPwd($4,"", false); }
+    |   guion pwd igual cadena {loginV->setPwd($4,"", true); }
 ;
 %%
 void yyerror(const char *s)

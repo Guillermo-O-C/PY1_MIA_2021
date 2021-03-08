@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <sstream>
 #include <fstream>
 using namespace std;
 #include "mbr.h"
@@ -41,6 +42,7 @@ class _REP{
     string nameToString(char * name);
     string recorrerArbol(FILE* search,SB superbloque, inode inodo, string content, int inodoNo);
     string folderToString(char * name);
+    string toHex(int hex);
 };
 
 void _REP::setPath(string path, bool isCadena){
@@ -703,7 +705,7 @@ void _REP::graphSB(){
                 graph=graph+nameToString(superbloque.s_umtime);
                 graph=graph+"</td></tr>";
                 graph=graph+"<tr><td>s_mnt_count</td><td>"+to_string(superbloque.s_mnt_count)+"</td></tr>";
-                graph=graph+"<tr><td>s_magic</td><td>"+to_string(superbloque.s_magic)+"</td></tr>";
+                graph=graph+"<tr><td>s_magic</td><td>0x"+toHex(superbloque.s_magic)+"</td></tr>";
                 graph=graph+"<tr><td>s_inode_size</td><td>"+to_string(superbloque.s_inode_size)+"</td></tr>";
                 graph=graph+"<tr><td>s_block_size</td><td>"+to_string(superbloque.s_block_size)+"</td></tr>";
                 graph=graph+"<tr><td>s_first_ino</td><td>"+to_string(superbloque.s_first_ino)+"</td></tr>";
@@ -803,4 +805,11 @@ string _REP::folderToString(char * name){
         str=str+name[i];
     }
     return str;
+}
+
+string _REP::toHex(int hex){
+    std::stringstream ss;
+    ss << std::hex << hex;
+    const std::string s = ss.str();
+    return toUpperCase(s);
 }

@@ -138,14 +138,14 @@ void _MKFS::exe(){
                     lastStart=lastStart+n*sizeof(Journaling);
                 }
                 //bitmap de inodos
-                cout << "inode bitmap stars in "<<to_string(lastStart)<<endl;
+                //cout << "inode bitmap stars in "<<to_string(lastStart)<<endl;
                 for(int e=lastStart;e<lastStart+n;e++){
                     fseek(search, e, SEEK_SET);
                     fwrite("0", 1, 1, search);
                     fflush(search);
                 }
                 lastStart=lastStart+n;
-                cout << "block bitmap stars in "<<to_string(lastStart)<<endl;
+                //cout << "block bitmap stars in "<<to_string(lastStart)<<endl;
                 //bitmap de bloques
                 for(int e=lastStart;e<lastStart+3*n;e++){
                     fseek(search, e, SEEK_SET);

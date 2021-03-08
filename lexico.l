@@ -42,8 +42,8 @@ id ([a-zA-Z])([a-zA-Z]|[0-9]|"_")*
 "unmount" {yylval.STRING = strdup(yytext);return (unmount);};
 "mkfs" {yylval.STRING = strdup(yytext);return (mkfs);};
 "fs" {yylval.STRING = strdup(yytext);return (fs);};
-"usuario" {yylval.STRING = strdup(yytext);return (usuario);};
-"password" {yylval.STRING = strdup(yytext);return (password);};
+"usr" {yylval.STRING = strdup(yytext);return (usr);};
+"pwd" {yylval.STRING = strdup(yytext);return (pwd);};
 "login" {yylval.STRING = strdup(yytext);return (login);};
 "logout" {yylval.STRING = strdup(yytext);return (logout);};
 "mkgrp" {yylval.STRING = strdup(yytext);return (mkgrp);};

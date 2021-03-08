@@ -4,12 +4,14 @@ using namespace std;
 #include "parser.h"
 #include "mbr.h"
 #include "mountStructs.h"
+#include "user.h"
 
 extern int yylex(void);
 extern char *yytext;
 extern FILE *yyin;
 extern int yyparse(void);
 disco discosMontados[26];
+user usuarioActivo;
 
 void parse(){
     string entry;
