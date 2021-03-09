@@ -52,39 +52,40 @@ void _MKDIR::exe(){
     for(int i =0;i<4;i++){
         if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
             if(name==charToString(opciones[i].part_name, 12)){//está dentro de la partición
-                SB superBloque;
-                fseek(search, opciones[i].part_start, SEEK_SET);
-                fread(&superBloque, sizeof(SB), 1, search);
-                inode raiz;
-                fseek(search, superBloque.s_inode_start, SEEK_SET);
-                fread(&raiz, sizeof(inode), 1, search);
-                inode carpetaTemporal=raiz;
+                int inodeLocation=0;
                 int abuelo=0;
                 int padre=0;
                 this->path=(this->path[0]=='/')?this->path.substr(1, this->path.length()):this->path;
                 vector<string> carpetas = split(this->path, "/");
                 for(int e =0;e<carpetas.size();e++){//ciclo para iterar entre las carpetas de la ruta
+                    SB superBloque;
+                    fseek(search, opciones[i].part_start, SEEK_SET);
+                    fread(&superBloque, sizeof(SB), 1, search);
+                    inode carpetaTemporal;
+                    fseek(search, superBloque.s_inode_start+sizeof(inode)*inodeLocation, SEEK_SET);
+                    fread(&carpetaTemporal, sizeof(inode), 1, search);
+                    cout <<"APD0="<<carpetaTemporal.i_block[0]<<endl;
                     string folderName =carpetas[e];
-                    int folderLocation = searchForFolder(search, superBloque, carpetaTemporal, folderName);
+                    inodeLocation = searchForFolder(search, superBloque, carpetaTemporal, folderName);
                     cout << "se busca la carpeta "<<folderName<<endl;
-                    if(abuelo==padre) padre=folderLocation;
-                    if(padre!=folderLocation){
+                    if(abuelo==padre) padre=inodeLocation;
+                    if(padre!=inodeLocation){
                         abuelo=padre;
-                        padre=folderLocation;
+                        padre=inodeLocation;
                     }
-                    if(folderLocation!=0){
+                    if(inodeLocation!=0){
                         if(e==carpetas.size()-1){//es la carpeta que hay que crear
                             cout << "ERROR: Ya existe la carpeta "+folderName<<endl;
                             return;
                         }
                         cout << "La carpeta ya existe"<<endl;
-                        fseek(search, superBloque.s_inode_start+sizeof(inode)*folderLocation,SEEK_SET);
-                        fread(&carpetaTemporal, sizeof(inode), 1, search);
                     }
                     else{
                         if(e==carpetas.size()-1 || this->p){//es la carpeta que hay que crear || se crea la carpeta
                             createFolder(search, opciones[i].part_start, superBloque, carpetaTemporal, folderName, abuelo, padre);
-                            return;//por ahora
+                            inodeLocation = superBloque.s_first_ino;
+                            cout << "new folder #"<<inodeLocation<<endl;
+                            if(e==carpetas.size()-1)cout << "Se ha creado el path exitosamente"<<endl;
                         }
                         else{
                             cout << "ERROR: No existe la carpeta "+getFolderN(this->path, "/", e)<<endl;
@@ -301,19 +302,62 @@ void _MKDIR::createFolder(FILE * search, int partStart, SB superBloque, inode ca
                     fwrite("1",1, 1, search);
                     fflush(search);
                     //actualizar el superbloque
-                    superBloque.s_first_ino=superBloque.s_first_ino+1;
-                    superBloque.s_first_blo=superBloque.s_first_blo+1;
-                    superBloque.s_free_blocks_count=superBloque.s_free_blocks_count-1;
-                    superBloque.s_free_inodes_count=superBloque.s_free_inodes_count-1;
+                    superBloque.s_first_ino++;
+                    superBloque.s_first_blo++;
+                    superBloque.s_free_blocks_count--;
+                    superBloque.s_free_inodes_count--;
                     fseek(search, partStart, SEEK_SET);
                     fwrite(&superBloque, sizeof(SB), 1, search);
                     fflush(search);
-                    cout <<"Se ha creado la carpeta exitosamente"<<endl;
+                    cout <<"Se ha creado la carpeta "+folderName+" exitosamente"<<endl;
                     return;
                 }                
             }
-        }else{//crear bloque carpeta
-
+        }else{
+            //crear bloque carpeta en posición j
+            inode nuevaCarpeta;
+            strcpy(nuevaCarpeta.i_atime,fechayhora);
+            strcpy(nuevaCarpeta.i_ctime,fechayhora);
+            strcpy(nuevaCarpeta.i_mtime,fechayhora);
+            nuevaCarpeta.i_block[0]=superBloque.s_first_blo;//se aumenta el siguiente bloque libre
+            fseek(search, superBloque.s_inode_start + superBloque.s_first_ino*sizeof(inode), SEEK_SET);
+            fwrite(&nuevaCarpeta, sizeof(inode), 1, search);
+            flush(search);
+            //crear bloque 0
+            inode Block0;
+            strcpy(Block0.b_content[0].b_name,".");
+            Block0.b_content[0].b_inodo=padre;
+            strcpy(Block0.b_content[1].b_name,"..");
+            Block0.b_content[1].b_inodo=abuelo;
+            cout << "basic folder will be block "<<superBloque.s_first_blo<<endl;
+            fseek(search, superBloque.s_block_start+ 64*superBloque.s_first_blo, SEEK_SET);
+            fwrite(&Block0, sizeof(folder_block), 1, search);
+            fflush(search);
+            //actualizar el bloque de carpeta actual
+            folder.b_content[o].b_inodo=superBloque.s_first_ino;//se aumenta el siguiente inodo libre
+            cout <<"folder name=" <<folderName<<endl;
+            strcpy(folder.b_content[o].b_name,folderName.c_str());
+            cout << "father folder is "<<carpetaTemporal.i_block[j]<<endl;
+            fseek(search, superBloque.s_block_start+64*carpetaTemporal.i_block[j],SEEK_SET);
+            fwrite(&folder, 64, 1, search);
+            fflush(search);
+            //actualizar bitmap de inodos
+            fseek(search, superBloque.s_bm_inode_start + superBloque.s_first_ino,SEEK_SET);
+            fwrite("1",1, 1, search);
+            fflush(search);
+            fseek(search, superBloque.s_bm_block_start + superBloque.s_first_blo,SEEK_SET);
+            fwrite("1",1, 1, search);
+            fflush(search);
+            //actualizar el superbloque
+            superBloque.s_first_ino++;
+            superBloque.s_first_blo++;
+            superBloque.s_free_blocks_count--;
+            superBloque.s_free_inodes_count--;
+            fseek(search, partStart, SEEK_SET);
+            fwrite(&superBloque, sizeof(SB), 1, search);
+            fflush(search);
+            cout <<"Se ha creado la carpeta "+folderName+" exitosamente"<<endl;
+            return;
         }
     }
     if(carpetaTemporal.i_block[13]!=-1){//se está usando el API1
