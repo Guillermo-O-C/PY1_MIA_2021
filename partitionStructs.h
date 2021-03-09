@@ -24,8 +24,8 @@ struct SB {
     int s_magic=-1;
     int s_inode_size=-1;
     int s_block_size=-1;
-    int s_first_ino=-1;
-    int s_first_blo=-1;
+    int s_first_ino=-1;//Primer inodo libre
+    int s_first_blo=-1;//Primer bloque libre
     int s_bm_inode_start=-1;
     int s_bm_block_start=-1;
     int s_inode_start=-1;

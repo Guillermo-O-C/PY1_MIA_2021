@@ -475,7 +475,7 @@ void _REP::graphBlocks(){
                     if(byte=='1'){//carpetas
                         if(arrow=='1') punteros=punteros+"->";
                         folder_block folder;
-                        fseek(search, superbloque.s_block_start+sizeof(inode)*(e-superbloque.s_bm_block_start), SEEK_SET);
+                        fseek(search, superbloque.s_block_start+64*(e-superbloque.s_bm_block_start), SEEK_SET);
                         fread(&folder, sizeof(folder_block), 1, search);
                         punteros=punteros+"block"+to_string(e-superbloque.s_bm_block_start);
                         graph=graph+"block"+to_string(e-superbloque.s_bm_block_start)+" [label=<<table border=\"1\">";
@@ -511,7 +511,7 @@ void _REP::graphBlocks(){
                     else if(byte=='3'){//punteros
                         if(arrow=='1') punteros=punteros+"->";
                         pointers apuntadores;
-                        fseek(search, superbloque.s_block_start+sizeof(inode)*(e-superbloque.s_bm_block_start), SEEK_SET);
+                        fseek(search, superbloque.s_block_start+64*(e-superbloque.s_bm_block_start), SEEK_SET);
                         fread(&apuntadores, sizeof(file_block), 1, search);
                         punteros=punteros+"block"+to_string(e-superbloque.s_bm_inode_start);
                         graph=graph+"block"+to_string(e-superbloque.s_bm_inode_start)+" [label=<<table border=\"1\">";
@@ -622,7 +622,7 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
                 content=content+"</table>>];";  
                 for(int e =0;e<4;e++){
                     if(folder.b_content[e].b_inodo!=-1){
-                        if(inodo.i_block[i]==folder.b_content[e].b_inodo)continue;//se tiene que condicionar más
+                        if(i==0 && e==0 || i==0 && e==1)continue;//se tiene que condicionar más
                         content=content+"folder"+to_string(inodo.i_block[i])+":f"+to_string(e)+"->inode"+to_string(folder.b_content[e].b_inodo)+";\n";
                         fseek(search, superbloque.s_inode_start+folder.b_content[e].b_inodo*sizeof(inode),SEEK_SET);
                         inode next;

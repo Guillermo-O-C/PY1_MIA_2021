@@ -14,6 +14,7 @@
 #include "mount.h"
 #include "mkfs.h"
 #include "login.h"
+#include "mkdir.h"
 
 using namespace std;
 extern int yylex(void);
@@ -31,6 +32,7 @@ _EXEC * execV;
 _MOUNT * mountV;
 _MKFS * mkfsV;
 _LOGIN *loginV;
+_MKDIR *mkdirV;
 %}
 
 %start INIT
@@ -43,6 +45,7 @@ _LOGIN *loginV;
 %token<STRING> size
 %token<STRING> f
 %token<STRING> u
+%token<STRING> p
 %token<STRING> path
 %token<STRING> rmdisk
 %token<STRING> fdisk
@@ -72,6 +75,7 @@ _LOGIN *loginV;
 %token<STRING> partition_id
 %token<STRING> exec
 %token<STRING> pause_
+%token<STRING> mkdir
 
 %type<STRING> INIT
 %type<STRING> INSTRUCCION
@@ -90,6 +94,8 @@ _LOGIN *loginV;
 %type<STRING> MKFSPARAM
 %type<STRING> LOGINP
 %type<STRING> LOGINPARAM
+%type<STRING> MKDIRP
+%type<STRING> MKDIRPARAM
 
 %define parse.error verbose
 %locations
@@ -120,6 +126,7 @@ INSTRUCCION:
     | mount {mountV = new _MOUNT();} MOUNTP {mountV->exe();/*realiza la eliminación del disco*/}
     | unmount guion R_id igual partition_id {mountV->unmount($5); }
     | mkfs {mkfsV = new _MKFS();} MKFSP {mkfsV->exe();}
+    | mkdir {mkdirV = new _MKDIR();} MKDIRP {mkdirV->exe();}
     | login {loginV = new _LOGIN();} LOGINP {loginV->exe();}
     | logout {loginV->logout();} 
     | error {std::cout << "error";}
@@ -157,6 +164,7 @@ FDISKPARAM :
         guion size igual numero {fdiskV->setSize(atoi($4));}
     |   guion u igual id {fdiskV->setUnit($4);}
     |   guion type igual id {fdiskV->setType($4);}
+    |   guion type igual p {fdiskV->setType($4);}
     |   guion f igual id {fdiskV->setFit($4);}
     |   guion delete_ igual id {fdiskV->setDelete($4);}
     |   guion name igual id {fdiskV->setName($4, false);}
@@ -215,6 +223,17 @@ LOGINPARAM :
     |   guion pwd igual numero id {loginV->setPwd($4,$5, false); }
     |   guion pwd igual numero {loginV->setPwd($4,"", false); }
     |   guion pwd igual cadena {loginV->setPwd($4,"", true); }
+;
+
+MKDIRP:
+    MKDIRP MKDIRPARAM
+    | MKDIRPARAM
+;
+
+MKDIRPARAM :
+        guion p {mkdirV->setP();}
+    |   guion path igual ruta {mkdirV->setPath($4, false);}
+    |   guion path igual cadena {mkdirV->setPath($4, true);}
 ;
 %%
 void yyerror(const char *s)

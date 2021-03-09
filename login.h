@@ -15,7 +15,7 @@ class _LOGIN{
             this->password="";
         };
         void setUsr(string user, bool isCadena);
-        void setPwd(string first, string second);
+        void setPwd(string first, string second, bool isCadena);
         void setId(string partitionID);
         void exe();
         string toUpperCase(string cadena);
