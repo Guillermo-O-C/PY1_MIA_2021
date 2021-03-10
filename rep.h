@@ -420,7 +420,7 @@ void _REP::graphInodos(){
                         graph=graph+"<tr><td>API1</td><td>"+to_string(inodo.i_block[12])+"</td></tr>";
                         graph=graph+"<tr><td>API2</td><td>"+to_string(inodo.i_block[13])+"</td></tr>";
                         graph=graph+"<tr><td>API3</td><td>"+to_string(inodo.i_block[14])+"</td></tr>";
-                        graph=graph+"<tr><td>i_type</td><td>"+to_string(inodo.i_type)+"</td></tr>";
+                        graph=graph+"<tr><td>i_type</td><td>"+inodo.i_type+"</td></tr>";
                         graph=graph+"<tr><td>i_perm</td><td>"+to_string(inodo.i_perm)+"</td></tr>";
                         graph=graph+"</table>>];\n";
                         arrow='1';
@@ -598,7 +598,7 @@ void _REP::graphTree(){
 string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string content, int inodeNo){
     //color inodo 54b4eb, content f7de1b, carpetas 04ff00, apuntadores ff8c00
     content=content+"inode"+to_string(inodeNo)+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#54b4eb\"><tr><td colspan=\"2\">Inodo_"+to_string(inodeNo)+"</td></tr>";    
-    if(inodo.i_type==0){
+    if(inodo.i_type=='0'){
         content=content+"<tr><td>tipo</td><td>0</td></tr>";
         content=content+"<tr><td>tamaño</td><td>0</td></tr>";
         for(int i =0;i<13;i++){
@@ -622,7 +622,7 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
                 content=content+"</table>>];";  
                 for(int e =0;e<4;e++){
                     if(folder.b_content[e].b_inodo!=-1){
-                        if(i==0 && e==0 || i==0 && e==1)continue;//se tiene que condicionar más
+                        if(i==0 && e==0 || i==0 && e==1)continue;//para que no se encicle con el padre y abuelo
                         content=content+"folder"+to_string(inodo.i_block[i])+":f"+to_string(e)+"->inode"+to_string(folder.b_content[e].b_inodo)+";\n";
                         fseek(search, superbloque.s_inode_start+folder.b_content[e].b_inodo*sizeof(inode),SEEK_SET);
                         inode next;
@@ -631,6 +631,43 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
                     }                    
                 }      
             }
+        }
+        //API1
+        if(inodo.i_block[13]!=-1){//API1 en uso
+            content=content+"f13->API"+to_string(inodo.i_block[13])+";\n";
+            content=content+"API"+to_string(inodo.i_block[13])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#04ff00\">";
+            content=content+"<tr><td colspan=\"2\">Bloque_"+to_string(inodo.i_block[13])+"</td></tr>";
+            pointers apuntadores;
+            fseek(search, inodo.i_block[13]+superbloque.s_block_start, SEEK_SET);
+            fread(&apuntadores, 64, 1, search);
+            for(int i=0;i<16;i++){
+                content=content+"<tr><td PORT=\"f"+to_string(i)+"\">"+to_string(apuntadores.b_pointers[i])+"</td></tr>";
+            }
+            content=content+"</table>>];";  
+            for(int i=0;i<16;i++){
+                if(apuntadores.b_pointers[i]!=-1){//dirigen a un bloque de tipo carpeta
+                    content=content+"API"+to_string(inodo.i_block[13])+":f"+to_string(i)+"->folder"+to_string(apuntadores.b_pointers[i])+";\n";
+                    content=content+"folder"+to_string(apuntadores.b_pointers[i])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#04ff00\">";
+                    content=content+"<tr><td colspan=\"2\">Bloque_"+to_string(apuntadores.b_pointers[i])+"</td></tr>";
+                    folder_block folder;
+                    fseek(search, superbloque.s_block_start+apuntadores.b_pointers[i]*64, SEEK_SET);
+                    fread(&folder, 64, 1, search);
+                    for(int e =0;e<4;e++){
+                        content=content+"<tr><td>"+folderToString(folder.b_content[e].b_name)+"</td><td PORT=\"f"+to_string(e)+"\">"+to_string(folder.b_content[e].b_inodo)+"</td></tr>";
+                    }
+                    content=content+"</table>>];";  
+                    for(int e =0;e<4;e++){
+                        if(folder.b_content[e].b_inodo!=-1){
+                            if(i==0 && e==0 || i==0 && e==1)continue;//se tiene que condicionar más
+                            content=content+"folder"+to_string(inodo.i_block[i])+":f"+to_string(e)+"->inode"+to_string(folder.b_content[e].b_inodo)+";\n";
+                            fseek(search, superbloque.s_inode_start+folder.b_content[e].b_inodo*sizeof(inode),SEEK_SET);
+                            inode next;
+                            fread(&next, sizeof(inode), 1, search);
+                            content = recorrerArbol(search, superbloque, next, content, folder.b_content[e].b_inodo);
+                        }                    
+                    } 
+                }                    
+            }    
         }
     }
     else{

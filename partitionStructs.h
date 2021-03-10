@@ -40,7 +40,7 @@ struct inode{
     char i_ctime[16]="";
     char i_mtime[16]="";
     int i_block[16]={-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
-    char i_type=0;
+    char i_type='0';
     int i_perm=664;
 };
 
