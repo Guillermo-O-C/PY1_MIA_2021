@@ -32,6 +32,7 @@ id ([a-zA-Z])([a-zA-Z]|[0-9]|"_")*
 "f" {yylval.STRING = strdup(yytext);return (f);};
 "u" {yylval.STRING = strdup(yytext);return (u);};
 "p" {yylval.STRING = strdup(yytext);return (p);};
+"r" {yylval.STRING = strdup(yytext);return (r);};
 "path" {yylval.STRING = strdup(yytext);return (path);};
 "rmdisk" {yylval.STRING = strdup(yytext);return (rmdisk);};
 "fdisk" {yylval.STRING = strdup(yytext);return (fdisk);};
@@ -59,6 +60,8 @@ id ([a-zA-Z])([a-zA-Z]|[0-9]|"_")*
 "exec" {yylval.STRING = strdup(yytext);return (exec);};
 "pause" {yylval.STRING = strdup(yytext);return (pause_);};
 "mkdir" {yylval.STRING = strdup(yytext);return (mkdir);};
+"mkfile" {yylval.STRING = strdup(yytext);return (mkfile);};
+"cont" {yylval.STRING = strdup(yytext);return (cont);};
 {id} {yylval.STRING = strdup(yytext); return (id);};
 {ruta} {yylval.STRING = strdup(yytext); return (ruta);};
 . {}

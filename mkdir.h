@@ -35,6 +35,10 @@ void _MKDIR::setP(){
     this->p=true;
 };
 void _MKDIR::exe(){
+    if(this->path==""){
+        cout << "ERROR:El parámetro path es obligatorio."<<endl;
+        return;
+    }
     string id=usuarioActivo.partitionID;
     int diskSpot = (int)id[3]-65;
     int partSpot=id[2]-'0';//se le resta uno para obotener la posición en el array
@@ -64,23 +68,15 @@ void _MKDIR::exe(){
                     inode carpetaTemporal;
                     fseek(search, superBloque.s_inode_start+sizeof(inode)*inodeLocation, SEEK_SET);
                     fread(&carpetaTemporal, sizeof(inode), 1, search);
-                    cout <<"APD0="<<carpetaTemporal.i_block[0]<<endl;
                     string folderName =carpetas[e];
                     inodeLocation = searchForFolder(search, superBloque, carpetaTemporal, folderName);
-                    cout << "se busca la carpeta "<<folderName<<endl;
-                    /*if(abuelo==padre) padre=inodeLocation;
-                    if(padre!=inodeLocation){
-                        abuelo=padre;
-                        padre=inodeLocation;
-                    }*/
                     if(inodeLocation!=0){
                         if(e==carpetas.size()-1){//es la carpeta que hay que crear
                             cout << "ERROR: Ya existe la carpeta "+folderName<<endl;
                             return;
                         }
-                        cout << "La carpeta ya existe"<<endl;
-                        abuelo=padre;
-                        padre=inodeLocation;
+                    abuelo=padre;
+                    padre=inodeLocation;
                     }
                     else{
                         if(e==carpetas.size()-1 || this->p){//es la carpeta que hay que crear || se crea la carpeta
@@ -88,11 +84,9 @@ void _MKDIR::exe(){
                             padre=superBloque.s_first_ino;
                             createFolder(search, opciones[i].part_start, superBloque, carpetaTemporal, folderName, abuelo, padre);
                             inodeLocation = superBloque.s_first_ino;
-                            cout << "new folder #"<<inodeLocation<<endl;
-                            if(e==carpetas.size()-1)cout << "Se ha creado el path exitosamente"<<endl;
                         }
                         else{
-                            cout << "ERROR: No existe la carpeta "+getFolderN(this->path, "/", e)<<endl;
+                            cout << "ERROR: No existe la carpeta "+folderName<<endl;
                             return;
                         }
                     }
@@ -159,8 +153,7 @@ int _MKDIR::searchForFolder(FILE * search,SB superBloque,inode carpetaTemporal, 
                     if(charToString(folder.b_content[o].b_name, 12) == folderName){
                         fseek(search, superBloque.s_inode_start+sizeof(inode)*folder.b_content[o].b_inodo, SEEK_SET);
                         fread(&carpetaTemporal, sizeof(inode), 1, search);
-                        cout << "type is = "<<carpetaTemporal.i_type<<endl;
-                        if(carpetaTemporal.i_type=='0'){
+                       if(carpetaTemporal.i_type=='0'){
                             return folder.b_content[o].b_inodo;
                         }
                     } 
@@ -286,15 +279,12 @@ void _MKDIR::createFolder(FILE * search, int partStart, SB superBloque, inode ca
                     Block0.b_content[0].b_inodo=padre;
                     strcpy(Block0.b_content[1].b_name,"..");
                     Block0.b_content[1].b_inodo=abuelo;
-                    cout << "basic folder will be block "<<superBloque.s_first_blo<<endl;
                     fseek(search, superBloque.s_block_start+ 64*superBloque.s_first_blo, SEEK_SET);
                     fwrite(&Block0, sizeof(folder_block), 1, search);
                     fflush(search);
                     //actualizar el bloque de carpeta actual
                     folder.b_content[o].b_inodo=superBloque.s_first_ino;//se aumenta el siguiente inodo libre
-                    cout <<"folder name=" <<folderName<<endl;
                     strcpy(folder.b_content[o].b_name,folderName.c_str());
-                    cout << "father folder is "<<carpetaTemporal.i_block[j]<<endl;
                     fseek(search, superBloque.s_block_start+64*carpetaTemporal.i_block[j],SEEK_SET);
                     fwrite(&folder, 64, 1, search);
                     fflush(search);
@@ -350,16 +340,13 @@ void _MKDIR::createFolder(FILE * search, int partStart, SB superBloque, inode ca
             Block0.b_content[0].b_inodo=padre;
             strcpy(Block0.b_content[1].b_name,"..");
             Block0.b_content[1].b_inodo=abuelo;
-            cout << "basic folder will be block "<<superBloque.s_first_blo<<endl;
             fseek(search, superBloque.s_block_start+ 64*superBloque.s_first_blo, SEEK_SET);
             fwrite(&Block0, sizeof(folder_block), 1, search);
             fflush(search);
             //actualizar el bloque de carpeta actual creando bloque carpeta en posición j
             folder_block carpeta;
             carpeta.b_content[0].b_inodo=superBloque.s_first_ino;//se aumenta el siguiente inodo libre
-            cout <<"folder name=" <<folderName<<endl;
             strcpy(carpeta.b_content[0].b_name,folderName.c_str());
-            cout << "father folder is "<<carpetaTemporal.i_block[j]<<endl;
             fseek(search, superBloque.s_block_start+64*carpetaTemporal.i_block[j],SEEK_SET);
             fwrite(&carpeta, 64, 1, search);
             fflush(search);
@@ -432,15 +419,12 @@ void _MKDIR::createFolder(FILE * search, int partStart, SB superBloque, inode ca
                         Block0.b_content[0].b_inodo=padre;
                         strcpy(Block0.b_content[1].b_name,"..");
                         Block0.b_content[1].b_inodo=abuelo;
-                        cout << "basic folder will be block "<<superBloque.s_first_blo<<endl;
                         fseek(search, superBloque.s_block_start+ 64*superBloque.s_first_blo, SEEK_SET);
                         fwrite(&Block0, sizeof(folder_block), 1, search);
                         fflush(search);
                         //actualizar el bloque de carpeta actual
                         folder.b_content[o].b_inodo=superBloque.s_first_ino;//se aumenta el siguiente inodo libre
-                        cout <<"folder name=" <<folderName<<endl;
                         strcpy(folder.b_content[o].b_name,folderName.c_str());
-                        cout << "father folder is "<<padre<<endl;
                         fseek(search, superBloque.s_block_start+64*apuntadores.b_pointers[i],SEEK_SET);
                         fwrite(&folder, 64, 1, search);
                         fflush(search);
@@ -495,16 +479,13 @@ void _MKDIR::createFolder(FILE * search, int partStart, SB superBloque, inode ca
                 Block0.b_content[0].b_inodo=padre;
                 strcpy(Block0.b_content[1].b_name,"..");
                 Block0.b_content[1].b_inodo=abuelo;
-                cout << "basic folder will be block "<<superBloque.s_first_blo<<endl;
                 fseek(search, superBloque.s_block_start+ 64*superBloque.s_first_blo, SEEK_SET);
                 fwrite(&Block0, sizeof(folder_block), 1, search);
                 fflush(search);
                 //actualizar el bloque de carpeta actual creando bloque carpeta en posición j
                 folder_block carpeta;
                 carpeta.b_content[0].b_inodo=superBloque.s_first_ino;//se aumenta el siguiente inodo libre
-                cout <<"folder name=" <<folderName<<endl;
                 strcpy(carpeta.b_content[0].b_name,folderName.c_str());
-                cout << "father folder is "<<padre<<endl;
                 fseek(search, superBloque.s_block_start+64*apuntadores.b_pointers[i],SEEK_SET);
                 fwrite(&carpeta, 64, 1, search);
                 fflush(search);

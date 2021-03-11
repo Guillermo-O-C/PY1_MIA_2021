@@ -674,7 +674,9 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
         content=content+"<tr><td>tipo</td><td>1</td></tr>";
         content=content+"<tr><td>tamaño</td><td>"+to_string(inodo.i_size)+"</td></tr>";
         for(int i =0;i<13;i++){
-            content=content+"<tr><td>APD"+to_string(i)+"</td><td PORT=\"f"+to_string(i)+"\">"+to_string(inodo.i_block[i])+"</td></tr>";       
+            cout << i<<"->"<<inodo.i_block[i]<<endl;
+            content=content+"<tr><td>APD"+to_string(i)+"</td><td PORT=\"f"+to_string(i)+"\">"+to_string(inodo.i_block[i])+"</td></tr>";  
+            if(i==12)break;     
         }
         content=content+"<tr><td>API"+to_string(1)+"</td><td PORT=\"f"+to_string(13)+"\">"+to_string(inodo.i_block[13])+"</td></tr>";
         content=content+"<tr><td>API"+to_string(2)+"</td><td PORT=\"f"+to_string(14)+"\">"+to_string(inodo.i_block[14])+"</td></tr>";
@@ -694,7 +696,7 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
                         sizePrinted++;
                     }
                 }else{
-                    for(int e =0;e<28;e++){
+                    for(int e =0;e<inodo.i_size-sizePrinted;e++){
                         if(file.b_content[e]=='\n')continue;
                         fileContent=fileContent+file.b_content[e];
                     }

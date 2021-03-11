@@ -58,36 +58,39 @@ extern int yydebug;
     f = 264,
     u = 265,
     p = 266,
-    path = 267,
-    rmdisk = 268,
-    fdisk = 269,
-    type = 270,
-    delete_ = 271,
-    name = 272,
-    add = 273,
-    mount = 274,
-    unmount = 275,
-    mkfs = 276,
-    id = 277,
-    fs = 278,
-    usr = 279,
-    pwd = 280,
-    login = 281,
-    logout = 282,
-    mkgrp = 283,
-    rmgrp = 284,
-    mkusr = 285,
-    rmusr = 286,
-    chmod = 287,
-    ugo = 288,
-    ruta = 289,
-    rep = 290,
-    R_id = 291,
-    R_ruta = 292,
-    partition_id = 293,
-    exec = 294,
-    pause_ = 295,
-    mkdir = 296
+    r = 267,
+    path = 268,
+    rmdisk = 269,
+    fdisk = 270,
+    type = 271,
+    delete_ = 272,
+    name = 273,
+    add = 274,
+    mount = 275,
+    unmount = 276,
+    mkfs = 277,
+    id = 278,
+    fs = 279,
+    usr = 280,
+    pwd = 281,
+    login = 282,
+    logout = 283,
+    mkgrp = 284,
+    rmgrp = 285,
+    mkusr = 286,
+    rmusr = 287,
+    chmod = 288,
+    ugo = 289,
+    ruta = 290,
+    rep = 291,
+    R_id = 292,
+    R_ruta = 293,
+    partition_id = 294,
+    exec = 295,
+    pause_ = 296,
+    mkdir = 297,
+    mkfile = 298,
+    cont = 299
   };
 #endif
 
@@ -95,12 +98,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 103 "gramatica.y"
+#line 110 "gramatica.y"
 
     char*STRING;
     char*NUM;
 
-#line 104 "parser.h"
+#line 107 "parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

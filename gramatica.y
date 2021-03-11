@@ -15,6 +15,7 @@
 #include "mkfs.h"
 #include "login.h"
 #include "mkdir.h"
+#include "mkfile.h"
 
 using namespace std;
 extern int yylex(void);
@@ -33,6 +34,7 @@ _MOUNT * mountV;
 _MKFS * mkfsV;
 _LOGIN *loginV;
 _MKDIR *mkdirV;
+_MKFILE *mkfileV;
 %}
 
 %start INIT
@@ -46,6 +48,7 @@ _MKDIR *mkdirV;
 %token<STRING> f
 %token<STRING> u
 %token<STRING> p
+%token<STRING> r
 %token<STRING> path
 %token<STRING> rmdisk
 %token<STRING> fdisk
@@ -76,6 +79,8 @@ _MKDIR *mkdirV;
 %token<STRING> exec
 %token<STRING> pause_
 %token<STRING> mkdir
+%token<STRING> mkfile
+%token<STRING> cont
 
 %type<STRING> INIT
 %type<STRING> INSTRUCCION
@@ -96,6 +101,8 @@ _MKDIR *mkdirV;
 %type<STRING> LOGINPARAM
 %type<STRING> MKDIRP
 %type<STRING> MKDIRPARAM
+%type<STRING> MKFILEP
+%type<STRING> MKFILEPARAM
 
 %define parse.error verbose
 %locations
@@ -128,6 +135,7 @@ INSTRUCCION:
     | mkfs {mkfsV = new _MKFS();} MKFSP {mkfsV->exe();}
     | mkdir {mkdirV = new _MKDIR();} MKDIRP {mkdirV->exe();}
     | login {loginV = new _LOGIN();} LOGINP {loginV->exe();}
+    | mkfile {mkfileV = new _MKFILE();} MKFILEP {mkfileV->exe();}
     | logout {loginV->logout();} 
     | error {std::cout << "error";}
 ;
@@ -234,6 +242,20 @@ MKDIRPARAM :
         guion p {mkdirV->setP();}
     |   guion path igual ruta {mkdirV->setPath($4, false);}
     |   guion path igual cadena {mkdirV->setPath($4, true);}
+;
+
+MKFILEP:
+    MKFILEP MKFILEPARAM
+    | MKFILEPARAM
+;
+
+MKFILEPARAM :
+        guion r {mkfileV->setR();}
+    |   guion path igual ruta {mkfileV->setPath($4, false);}
+    |   guion path igual cadena {mkfileV->setPath($4, true);}
+    |   guion size igual numero {mkfileV->setSize(atoi($4));}
+    |   guion cont igual ruta {mkfileV->setCont($4, false);}
+    |   guion cont igual cadena {mkfileV->setCont($4, true);}
 ;
 %%
 void yyerror(const char *s)
