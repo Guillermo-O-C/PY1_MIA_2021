@@ -137,7 +137,7 @@ INSTRUCCION:
     | login {loginV = new _LOGIN();} LOGINP {loginV->exe();}
     | mkfile {mkfileV = new _MKFILE();} MKFILEP {mkfileV->exe();}
     | logout {loginV->logout();} 
-    | error {std::cout << "error";}
+    | error {}
 ;
 
 MKDISKP:

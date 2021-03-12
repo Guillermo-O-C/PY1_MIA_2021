@@ -1757,7 +1757,7 @@ yyreduce:
 
   case 28:
 #line 140 "gramatica.y"
-            {std::cout << "error";}
+            {}
 #line 1762 "parser.cpp"
     break;
 

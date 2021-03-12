@@ -57,11 +57,11 @@ void _LOGIN::exe(){
         cout << "ERROR:Ya existe una sesión activa"<<endl;
         return;
     }
-    usuarioActivo.partitionID=this->partitionID;
-    usuarioActivo.password=this->password;
-    usuarioActivo.user=this->user;
     if(this->user=="root" && this->password=="123"){
         cout << "Inicio de sesión como usuario root."<<endl;
+        usuarioActivo.partitionID=this->partitionID;
+        usuarioActivo.password=this->password;
+        usuarioActivo.user=this->user;
     }else{
         cout << "ERROR:Error de usuario y contraseña, inténtalo de nuevo."<<endl;
     }

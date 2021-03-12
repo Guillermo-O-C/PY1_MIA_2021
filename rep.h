@@ -56,7 +56,8 @@ void _REP::setName(string name){
     this->name=toLowerCase(name);
 };
 void _REP::setId(string id){
-    this->id=toUpperCase(id);
+    id=toUpperCase(id);
+    this->id=id;
     int diskSpot = (int)id[3]-65;
     int partSpot=id[2]-'0';//se le resta uno para obotener la posición en el array
     partSpot--;
@@ -73,6 +74,15 @@ void _REP::setRuta(string ruta){
     this->ruta=ruta;
 };
 void _REP::exe(){
+    if(discosMontados[this->diskSpot].status==1){//el disco funciona
+        if(discosMontados[this->diskSpot].particiones[this->partSpot].status!=1){
+            cout << "ERROR:No hay una partición montada en el espacio "<<(char)(this->partSpot+1)<<endl;
+            return;
+        }
+    }else{
+        cout << "ERROR:No hay un disco en el espacio de la letra "<<(char)(this->diskSpot+65)<<endl;
+        return;
+    }
     if(this->id==""){
         cout << "ERROR: El parámetro ID es obligatorio."<<endl;
         return;
@@ -106,7 +116,8 @@ void _REP::exe(){
     }
     else if(this->name=="sb"){
         graphSB();
-    }else{
+    }
+    else{
         cout <<"No se reconoce el name "<<this->name<<" como un reporte." <<endl;
         return;
     }
@@ -427,7 +438,6 @@ void _REP::graphInodos(){
                     }
                 }
                 Print(graph+punteros+";\n}", "Inodos");
-                cout << "Reporte generado exitosamente."<<endl;
                 return;
             }
         }
@@ -468,18 +478,18 @@ void _REP::graphBlocks(){
                 fread(&superbloque, sizeof(SB), 1, search);
                 char arrow = '0';
                 cout<< "Generando reporte, por favor espera..."<<endl;
-                for(int e = superbloque.s_bm_block_start;e<superbloque.s_bm_block_start+superbloque.s_blocks_count;e++){
-                    fseek(search, e, SEEK_SET);
+                for(int e = 0;e<superbloque.s_first_blo;e++){
+                    fseek(search, superbloque.s_bm_block_start+e, SEEK_SET);
                     char byte;
                     fread(&byte, 1, 1, search);
                     if(byte=='1'){//carpetas
                         if(arrow=='1') punteros=punteros+"->";
                         folder_block folder;
-                        fseek(search, superbloque.s_block_start+64*(e-superbloque.s_bm_block_start), SEEK_SET);
+                        fseek(search, superbloque.s_block_start+64*(e), SEEK_SET);
                         fread(&folder, sizeof(folder_block), 1, search);
-                        punteros=punteros+"block"+to_string(e-superbloque.s_bm_block_start);
-                        graph=graph+"block"+to_string(e-superbloque.s_bm_block_start)+" [label=<<table border=\"1\">";
-                        graph=graph+"<tr><td colspan=\"2\">Block_"+to_string(e-superbloque.s_bm_block_start)+"</td></tr>";
+                        punteros=punteros+"block"+to_string(e);
+                        graph=graph+"block"+to_string(e)+" [label=<<table border=\"1\">";
+                        graph=graph+"<tr><td colspan=\"2\">Block_"+to_string(e)+"</td></tr>";
                         for(int o=0;o<4;o++){
                             graph=graph+"<tr><td>"+folderToString(folder.b_content[o].b_name)+"</td><td>"+to_string(folder.b_content[o].b_inodo)+"</td></tr>";
                         }
@@ -489,22 +499,19 @@ void _REP::graphBlocks(){
                     else if(byte=='2'){//contenido
                         if(arrow=='1') punteros=punteros+"->";
                         file_block file;
-                        fseek(search, superbloque.s_block_start+64*(e-superbloque.s_bm_block_start), SEEK_SET);
+                        fseek(search, superbloque.s_block_start+64*(e), SEEK_SET);
                         fread(&file, sizeof(file_block), 1, search);
-                        punteros=punteros+"block"+to_string(e-superbloque.s_bm_block_start);
-                        graph=graph+"block"+to_string(e-superbloque.s_bm_block_start)+" [label=<<table border=\"1\">";
+                        punteros=punteros+"block"+to_string(e);
+                        graph=graph+"block"+to_string(e)+" [label=<<table border=\"1\">";
                         string fileContent="";
                         int relleno=0;
                         for(int o=0;o<64;o++){
                             if(file.b_content[o]=='\0'){
-                                /*if(relleno==9)relleno=0;
-                                fileContent=fileContent+to_string(relleno);
-                                continue;*/
                                 break;
                             }
                             fileContent=fileContent+file.b_content[o];
                         }
-                        graph=graph+"<tr><td >Block_"+to_string(e-superbloque.s_bm_block_start)+"</td></tr>";
+                        graph=graph+"<tr><td >Block_"+to_string(e)+"</td></tr>";
                         graph=graph+"<tr><td>"+fileContent+"</td></tr>";
                         graph=graph+"</table>>];\n";
                         arrow='1';
@@ -512,23 +519,22 @@ void _REP::graphBlocks(){
                     else if(byte=='3'){//punteros
                         if(arrow=='1') punteros=punteros+"->";
                         pointers apuntadores;
-                        fseek(search, superbloque.s_block_start+64*(e-superbloque.s_bm_block_start), SEEK_SET);
+                        fseek(search, superbloque.s_block_start+64*(e), SEEK_SET);
                         fread(&apuntadores, sizeof(file_block), 1, search);
-                        punteros=punteros+"block"+to_string(e-superbloque.s_bm_inode_start);
-                        graph=graph+"block"+to_string(e-superbloque.s_bm_inode_start)+" [label=<<table border=\"1\">";
-                        graph=graph+"<tr><td colspan=\"2\">Block_"+to_string(e-superbloque.s_bm_inode_start)+"</td></tr>";
+                        punteros=punteros+"block"+to_string(e);
+                        graph=graph+"block"+to_string(e)+" [label=<<table border=\"1\">";
+                        graph=graph+"<tr><td colspan=\"2\">Block_"+to_string(e)+"</td></tr>";
                         for(int o=0;o<12;o++){
                             graph=graph+"<tr><td>APD"+to_string(o)+"</td><td>"+to_string(apuntadores.b_pointers[o])+"</td></tr>";
                         }
                         graph=graph+"<tr><td>API1</td><td>"+to_string(apuntadores.b_pointers[12])+"</td></tr>";
-                        graph=graph+"<tr><td>API2</td><td>"+to_string(apuntadores.b_pointers[13])+"</td></tr>";
-                        graph=graph+"<tr><td>API3</td><td>"+to_string(apuntadores.b_pointers[14])+"</td></tr>";
+                        graph=graph+"<tr><td>API2</td><td>"+to_string(apuntadores.b_pointers[12])+"</td></tr>";
+                        graph=graph+"<tr><td>API3</td><td>"+to_string(apuntadores.b_pointers[13])+"</td></tr>";
                         graph=graph+"</table>>];\n";
                         arrow='1';
                     }
                 }
-                Print(graph+punteros+";\n}", "Inodos");
-                cout << "Reporte generado exitosamente."<<endl;
+                Print(graph+punteros+";\n}", "Bloques");
                 return;
             }
         }
@@ -602,13 +608,13 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
     if(inodo.i_type=='0'){
         content=content+"<tr><td>tipo</td><td>0</td></tr>";
         content=content+"<tr><td>tamaño</td><td>0</td></tr>";
-        for(int i =0;i<13;i++){
+        for(int i =0;i<12;i++){
             content=content+"<tr><td>APD"+to_string(i)+"</td><td PORT=\"f"+to_string(i)+"\">"+to_string(inodo.i_block[i])+"</td></tr>";       
         }
-        content=content+"<tr><td>API"+to_string(1)+"</td><td PORT=\"f"+to_string(13)+"\">"+to_string(inodo.i_block[13])+"</td></tr>";
-        content=content+"<tr><td>API"+to_string(2)+"</td><td PORT=\"f"+to_string(14)+"\">"+to_string(inodo.i_block[14])+"</td></tr>";
-        content=content+"<tr><td>API"+to_string(3)+"</td><td PORT=\"f"+to_string(15)+"\">"+to_string(inodo.i_block[15])+"</td></tr></table>>];";
-        for(int i =0;i<13;i++){
+        content=content+"<tr><td>API"+to_string(1)+"</td><td PORT=\"f"+to_string(13)+"\">"+to_string(inodo.i_block[12])+"</td></tr>";
+        content=content+"<tr><td>API"+to_string(2)+"</td><td PORT=\"f"+to_string(14)+"\">"+to_string(inodo.i_block[13])+"</td></tr>";
+        content=content+"<tr><td>API"+to_string(3)+"</td><td PORT=\"f"+to_string(15)+"\">"+to_string(inodo.i_block[14])+"</td></tr></table>>];";
+        for(int i =0;i<12;i++){
             if(inodo.i_block[i]!=-1){
                 //existe una carpeta
                 content=content+"\ninode"+to_string(inodeNo)+":f"+to_string(i)+"->folder"+to_string(inodo.i_block[i])+";\n";
@@ -634,12 +640,12 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
             }
         }
         //API1
-        if(inodo.i_block[13]!=-1){//API1 en uso
-            content=content+"f13->API"+to_string(inodo.i_block[13])+";\n";
-            content=content+"API"+to_string(inodo.i_block[13])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#04ff00\">";
-            content=content+"<tr><td colspan=\"2\">Bloque_"+to_string(inodo.i_block[13])+"</td></tr>";
+        if(inodo.i_block[12]!=-1){//API1 en uso
+            content=content+"inode"+to_string(inodeNo)+":f13->API"+to_string(inodo.i_block[12])+";\n";
+            content=content+"API"+to_string(inodo.i_block[12])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#ff8c00\">";
+            content=content+"<tr><td>Bloque_"+to_string(inodo.i_block[12])+"</td></tr>";
             pointers apuntadores;
-            fseek(search, inodo.i_block[13]+superbloque.s_block_start, SEEK_SET);
+            fseek(search, 64*inodo.i_block[12]+superbloque.s_block_start, SEEK_SET);
             fread(&apuntadores, 64, 1, search);
             for(int i=0;i<16;i++){
                 content=content+"<tr><td PORT=\"f"+to_string(i)+"\">"+to_string(apuntadores.b_pointers[i])+"</td></tr>";
@@ -647,7 +653,7 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
             content=content+"</table>>];";  
             for(int i=0;i<16;i++){
                 if(apuntadores.b_pointers[i]!=-1){//dirigen a un bloque de tipo carpeta
-                    content=content+"API"+to_string(inodo.i_block[13])+":f"+to_string(i)+"->folder"+to_string(apuntadores.b_pointers[i])+";\n";
+                    content=content+"API"+to_string(inodo.i_block[12])+":f"+to_string(i)+"->folder"+to_string(apuntadores.b_pointers[i])+";\n";
                     content=content+"folder"+to_string(apuntadores.b_pointers[i])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#04ff00\">";
                     content=content+"<tr><td colspan=\"2\">Bloque_"+to_string(apuntadores.b_pointers[i])+"</td></tr>";
                     folder_block folder;
@@ -659,8 +665,7 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
                     content=content+"</table>>];";  
                     for(int e =0;e<4;e++){
                         if(folder.b_content[e].b_inodo!=-1){
-                            if(i==0 && e==0 || i==0 && e==1)continue;//se tiene que condicionar más
-                            content=content+"folder"+to_string(inodo.i_block[i])+":f"+to_string(e)+"->inode"+to_string(folder.b_content[e].b_inodo)+";\n";
+                            content=content+"folder"+to_string(apuntadores.b_pointers[i])+":f"+to_string(e)+"->inode"+to_string(folder.b_content[e].b_inodo)+";\n";
                             fseek(search, superbloque.s_inode_start+folder.b_content[e].b_inodo*sizeof(inode),SEEK_SET);
                             inode next;
                             fread(&next, sizeof(inode), 1, search);
@@ -674,17 +679,17 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
     else{
         content=content+"<tr><td>tipo</td><td>1</td></tr>";
         content=content+"<tr><td>tamaño</td><td>"+to_string(inodo.i_size)+"</td></tr>";
-        for(int i =0;i<13;i++){
+        for(int i =0;i<12;i++){
             content=content+"<tr><td>APD"+to_string(i)+"</td><td PORT=\"f"+to_string(i)+"\">"+to_string(inodo.i_block[i])+"</td></tr>";  
             if(i==12)break;     
         }
-        content=content+"<tr><td>API"+to_string(1)+"</td><td PORT=\"f"+to_string(13)+"\">"+to_string(inodo.i_block[13])+"</td></tr>";
-        content=content+"<tr><td>API"+to_string(2)+"</td><td PORT=\"f"+to_string(14)+"\">"+to_string(inodo.i_block[14])+"</td></tr>";
-        content=content+"<tr><td>API"+to_string(3)+"</td><td PORT=\"f"+to_string(15)+"\">"+to_string(inodo.i_block[15])+"</td></tr></table>>];";
+        content=content+"<tr><td>API"+to_string(1)+"</td><td PORT=\"f"+to_string(13)+"\">"+to_string(inodo.i_block[12])+"</td></tr>";
+        content=content+"<tr><td>API"+to_string(2)+"</td><td PORT=\"f"+to_string(14)+"\">"+to_string(inodo.i_block[13])+"</td></tr>";
+        content=content+"<tr><td>API"+to_string(3)+"</td><td PORT=\"f"+to_string(15)+"\">"+to_string(inodo.i_block[14])+"</td></tr></table>>];";
         if(inodo.i_size!=0){
             //existe un archivo
             int sizePrinted=0;
-            for(int i =0;i<13;i++){
+            for(int i =0;i<12;i++){
                 file_block file;
                 fseek(search, superbloque.s_block_start+inodo.i_block[i]*64, SEEK_SET);
                 fread(&file, 64, 1, search);
@@ -724,17 +729,19 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
             } 
             if(sizePrinted==inodo.i_size)return content;
             //API1
+            if(inodo.i_block[12]==-1)return content;
             pointers API1;
-            fseek(search, superbloque.s_block_start+inodo.i_block[13]*64, SEEK_SET);
+            fseek(search, superbloque.s_block_start+inodo.i_block[12]*64, SEEK_SET);
             fread(&API1, 64, 1, search);
-            content=content+"inode"+to_string(inodeNo)+":f"+to_string(13)+"->pointers"+to_string(inodo.i_block[13])+";";
-            content=content+"pointers"+to_string(inodo.i_block[13])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#ff8c00\">";
-            content=content+"<tr><td colspan=\"2\">BLOQUE_"+to_string(inodo.i_block[13])+"</td></tr>";
+            content=content+"inode"+to_string(inodeNo)+":f"+to_string(13)+"->pointers"+to_string(inodo.i_block[12])+";";
+            content=content+"pointers"+to_string(inodo.i_block[12])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#ff8c00\">";
+            content=content+"<tr><td colspan=\"2\">BLOQUE_"+to_string(inodo.i_block[12])+"</td></tr>";
             for(int i =0;i<16;i++){
                 content=content+"<tr><td>APD"+to_string(i)+"</td><td PORT=\"f"+to_string(i)+"\">"+to_string(API1.b_pointers[i])+"</td></tr>";  
             }
             content=content+"</table>>];";
             for(int i =0;i<16;i++){
+                if(sizePrinted==inodo.i_size || API1.b_pointers[i]==-1)break;//si apunta a -1 igual se arruinaría el grafo así que mejor break
                 file_block file;
                 fseek(search, superbloque.s_block_start+ API1.b_pointers[i]*64, SEEK_SET);
                 fread(&file, 64, 1, search);
@@ -746,7 +753,6 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
                             fileContent=fileContent+"\\n";
                         }else{
                             fileContent=fileContent+file.b_content[e];
-
                         }
                         sizePrinted++;
                     }
@@ -760,19 +766,19 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
                     }
                     sizePrinted=inodo.i_size;
                 }
-                content=content+"pointers"+to_string(inodo.i_block[13])+":f"+to_string(i)+"->file"+to_string(API1.b_pointers[i])+";";
+                content=content+"pointers"+to_string(inodo.i_block[12])+":f"+to_string(i)+"->file"+to_string(API1.b_pointers[i])+";";
                 content=content+"file"+to_string(API1.b_pointers[i])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#f7de1b\">";
                 content=content+"<tr><td>BLOQUE_"+to_string(API1.b_pointers[i])+"</td></tr>";
                 content=content+"<tr><td>"+fileContent.c_str()+"</td></tr></table>>];";
-                if(sizePrinted==inodo.i_size)break;
             }
             //API2
+            if(inodo.i_block[13]==-1)return content;
             pointers API2;
-            fseek(search, superbloque.s_block_start+inodo.i_block[14]*64, SEEK_SET);
+            fseek(search, superbloque.s_block_start+inodo.i_block[13]*64, SEEK_SET);
             fread(&API2, 64, 1, search);
-            content=content+"inode"+to_string(inodeNo)+":f"+to_string(14)+"->pointers"+to_string(inodo.i_block[14])+";";
-            content=content+"pointers"+to_string(inodo.i_block[14])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#ff8c00\">";
-            content=content+"<tr><td colspan=\"2\">BLOQUE_"+to_string(inodo.i_block[14])+"</td></tr>";
+            content=content+"inode"+to_string(inodeNo)+":f"+to_string(14)+"->pointers"+to_string(inodo.i_block[13])+";";
+            content=content+"pointers"+to_string(inodo.i_block[13])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#ff8c00\">";
+            content=content+"<tr><td colspan=\"2\">BLOQUE_"+to_string(inodo.i_block[13])+"</td></tr>";
             for(int i =0;i<2;i++){
                 content=content+"<tr><td>APD"+to_string(i)+"</td><td PORT=\"f"+to_string(i)+"\">"+to_string(API2.b_pointers[i])+"</td></tr>";  
             }
@@ -782,7 +788,7 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
                     pointers API1;
                     fseek(search, superbloque.s_block_start+API2.b_pointers[e]*64, SEEK_SET);
                     fread(&API1, 64, 1, search);
-                    content=content+"pointers"+to_string(inodo.i_block[14])+":f"+to_string(e)+"->pointers"+to_string(API2.b_pointers[e])+";";
+                    content=content+"pointers"+to_string(inodo.i_block[13])+":f"+to_string(e)+"->pointers"+to_string(API2.b_pointers[e])+";";
                     content=content+"pointers"+to_string(API2.b_pointers[e])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#ff8c00\">";
                     content=content+"<tr><td colspan=\"2\">BLOQUE_"+to_string(API2.b_pointers[e])+"</td></tr>";
                     for(int i =0;i<16;i++){
@@ -820,6 +826,80 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
                         content=content+"<tr><td>BLOQUE_"+to_string(API1.b_pointers[i])+"</td></tr>";
                         content=content+"<tr><td>"+fileContent.c_str()+"</td></tr></table>>];";
                         if(sizePrinted==inodo.i_size)break;
+                    }
+                }
+            }
+            //API3
+            if(inodo.i_block[14]==-1)return content;
+            pointers API3;
+            fseek(search, superbloque.s_block_start+inodo.i_block[14]*64, SEEK_SET);
+            fread(&API3, 64, 1, search);
+            content=content+"inode"+to_string(inodeNo)+":f"+to_string(15)+"->pointers"+to_string(inodo.i_block[14])+";";
+            content=content+"pointers"+to_string(inodo.i_block[14])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#ff8c00\">";
+            content=content+"<tr><td colspan=\"2\">BLOQUE_"+to_string(inodo.i_block[14])+"</td></tr>";
+            for(int i =0;i<2;i++){
+                content=content+"<tr><td>APD"+to_string(i)+"</td><td PORT=\"f"+to_string(i)+"\">"+to_string(API3.b_pointers[i])+"</td></tr>";  
+            }
+            content=content+"</table>>];";
+
+            for(int o=0;o<2;o++){
+                if(API3.b_pointers[o]!=-1){
+                    pointers API2;
+                    fseek(search, superbloque.s_block_start+API3.b_pointers[o]*64, SEEK_SET);
+                    fread(&API2, 64, 1, search);
+                    content=content+"pointers"+to_string(inodo.i_block[14])+":f"+to_string(o)+"->pointers"+to_string(API3.b_pointers[o])+";";
+                    content=content+"pointers"+to_string(API3.b_pointers[o])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#ff8c00\">";
+                    content=content+"<tr><td colspan=\"2\">BLOQUE_"+to_string(API3.b_pointers[o])+"</td></tr>";
+                    for(int i =0;i<2;i++){
+                        content=content+"<tr><td>APD"+to_string(i)+"</td><td PORT=\"f"+to_string(i)+"\">"+to_string(API2.b_pointers[i])+"</td></tr>";  
+                    }
+                    content=content+"</table>>];";
+                    //return content;
+                    for(int e =0;e<2;e++){
+                        if(API2.b_pointers[e]!=-1){
+                            pointers API1;
+                            fseek(search, superbloque.s_block_start+API2.b_pointers[e]*64, SEEK_SET);
+                            fread(&API1, 64, 1, search);
+                            content=content+"pointers"+to_string(API3.b_pointers[o])+":f"+to_string(e)+"->pointers"+to_string(API2.b_pointers[e])+";";
+                            content=content+"pointers"+to_string(API2.b_pointers[e])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#ff8c00\">";
+                            content=content+"<tr><td colspan=\"2\">BLOQUE_"+to_string(API2.b_pointers[e])+"</td></tr>";
+                            for(int i =0;i<16;i++){
+                                content=content+"<tr><td>APD"+to_string(i)+"</td><td PORT=\"f"+to_string(i)+"\">"+to_string(API1.b_pointers[i])+"</td></tr>";  
+                            }
+                            content=content+"</table>>];";
+                            for(int i =0;i<16;i++){
+                                file_block file;
+                                fseek(search, superbloque.s_block_start+ API1.b_pointers[i]*64, SEEK_SET);
+                                fread(&file, 64, 1, search);
+                                string fileContent="";
+                                if(inodo.i_size-sizePrinted>64){
+                                    //imprime los 64 bytes del bloque
+                                    for(int e =0;e<64;e++){
+                                        if(file.b_content[e]=='\n'){
+                                            fileContent=fileContent+"\\n";
+                                        }else{
+                                            fileContent=fileContent+file.b_content[e];
+
+                                        }
+                                        sizePrinted++;
+                                    }
+                                }else{
+                                    for(int e =0;e<inodo.i_size-sizePrinted;e++){
+                                        if(file.b_content[e]=='\n'){
+                                            fileContent=fileContent+"\\n";
+                                            continue;
+                                        }
+                                        fileContent=fileContent+file.b_content[e];
+                                    }
+                                    sizePrinted=inodo.i_size;
+                                }
+                                content=content+"pointers"+to_string(API2.b_pointers[e])+":f"+to_string(i)+"->file"+to_string(API1.b_pointers[i])+";";
+                                content=content+"file"+to_string(API1.b_pointers[i])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#f7de1b\">";
+                                content=content+"<tr><td>BLOQUE_"+to_string(API1.b_pointers[i])+"</td></tr>";
+                                content=content+"<tr><td>"+fileContent.c_str()+"</td></tr></table>>];";
+                                if(sizePrinted==inodo.i_size)break;
+                            }
+                        }
                     }
                 }
             }
