@@ -31,6 +31,7 @@ class _MKFILE{
     int searchFile(FILE * search,SB superBloque,inode carpetaTemporal, string folderName);
     void createFile(FILE * search, int partStart, SB superBloque, inode carpetaTemporal, string folderName, int abuelo, int padre);
     void fillFile(FILE * search, int partStart, SB superBloque, inode carpetaTemporal);
+    string fillAPI(FILE * search, int partStart, SB superBloque, inode carpetaTemporal, int pointerBlock, string content);
 };
 
 void _MKFILE::setPath(string path, bool isCadena){
@@ -124,10 +125,10 @@ void _MKFILE::exe(){
                                 cout << "ERROR: Ya existe la carpeta "+folderName<<endl;
                                 return;
                             }
-                        abuelo=padre;
-                        padre=inodeLocation;
-                        }
-                        else{
+                            abuelo=padre;
+                            padre=inodeLocation;
+                            }
+                            else{
                             if(this->r){//es la carpeta que hay que crear || se crea la carpeta
                                 abuelo=padre;
                                 padre=superBloque.s_first_ino;
@@ -774,7 +775,6 @@ void _MKFILE::createFile(FILE * search, int partStart, SB superBloque, inode car
             fflush(search);
             //creando bloque carpeta en posición j
             folder_block carpeta;
-            cout << "el nuevo bloque de carpeta para archivo es "<<superBloque.s_first_ino<<endl;
             strcpy(carpeta.b_content[0].b_name,folderName.c_str());
             carpeta.b_content[0].b_inodo=superBloque.s_first_ino;//se aumenta el siguiente inodo libre
             fseek(search, superBloque.s_block_start+64*carpetaTemporal.i_block[j],SEEK_SET);
@@ -1016,6 +1016,7 @@ void _MKFILE::createFile(FILE * search, int partStart, SB superBloque, inode car
 }
 
 void _MKFILE::fillFile(FILE * search, int partStart, SB superBloque, inode carpetaTemporal){
+    string content="";
     if(this->cont!=""){
         FILE * pFile;
         long lSize;
@@ -1037,24 +1038,121 @@ void _MKFILE::fillFile(FILE * search, int partStart, SB superBloque, inode carpe
         // copy the file into the buffer:
         result = fread (buffer,1,lSize,pFile);
         if (result != lSize) {fputs ("Reading error",stderr); exit (3);}
-        string content="";
         for(int i =0;i<lSize;i++){
             content+=buffer[i];
         }
-        cout << "el contenido del archivo es :\n"<<content<<endl;
         fclose (pFile);
         free (buffer);
-        carpetaTemporal.i_size=content.length();
+    }
+    else{
+        int relleno = 0;
+        for(int i = 0 ; i < this->size ; i++){
+            content=content+to_string(relleno);
+            relleno++;
+            if(relleno==10)relleno=0;
+        }
+    }
+    carpetaTemporal.i_size=content.length();
+    fseek(search, superBloque.s_inode_start+sizeof(inode)*(superBloque.s_first_ino-1), SEEK_SET);
+    fwrite(&carpetaTemporal, sizeof(inode), 1, search);
+    fflush(search);
+    for(int i = 0;i<13;i++){
+        carpetaTemporal.i_block[i]=superBloque.s_first_blo;
         fseek(search, superBloque.s_inode_start+sizeof(inode)*(superBloque.s_first_ino-1), SEEK_SET);
         fwrite(&carpetaTemporal, sizeof(inode), 1, search);
-        int inicio = 0;
-        int final = lSize;
-        for(int i = 0;i<13;i++){
-            cout << "contenido estará en "<<superBloque.s_first_blo<<endl;
-            carpetaTemporal.i_block[i]=superBloque.s_first_blo;
-            cout << "ino->"<<superBloque.s_first_blo<<endl;
-            fseek(search, superBloque.s_inode_start+sizeof(inode)*(superBloque.s_first_ino-1), SEEK_SET);
-            fwrite(&carpetaTemporal, sizeof(inode), 1, search);
+        fflush(search);
+        file_block contenido;
+        for(int e=0;e<64;e++){
+                if(content.length()==0){break;}
+                contenido.b_content[e]=content[0];
+                content.erase(0, 1);
+            }
+        //crear bloque de contenido
+        fseek(search, superBloque.s_block_start+64*(superBloque.s_first_blo), SEEK_SET);
+        fwrite(&contenido, 64, 1, search);
+        fflush(search);
+        //marcar en el bitmap de bloques
+        fseek(search, superBloque.s_bm_block_start + superBloque.s_first_blo,SEEK_SET);
+        fwrite("2",1, 1, search);
+        fflush(search);
+        //actualizar el superbloque
+        superBloque.s_first_blo++;
+        superBloque.s_free_blocks_count--;
+        fseek(search, partStart, SEEK_SET);
+        fwrite(&superBloque, sizeof(SB), 1, search);
+        fflush(search);               
+        if(content.length()==0)break;
+    }       
+    if(content.length()==0)return;
+    // se usará el API1
+    fseek(search, partStart, SEEK_SET);
+    fread(&superBloque, sizeof(SB), 1, search);
+    carpetaTemporal.i_block[13]=superBloque.s_first_blo;
+    fseek(search, superBloque.s_inode_start+sizeof(inode)*(superBloque.s_first_ino-1), SEEK_SET);
+    fwrite(&carpetaTemporal, sizeof(inode), 1, search);
+    fflush(search);
+    //int pointerBlock=superBloque.s_first_blo;
+    content = fillAPI(search, partStart, superBloque, carpetaTemporal, superBloque.s_first_blo, content);
+    if(content.length()==0)return;
+    //se usará el API2
+    fseek(search, partStart, SEEK_SET);
+    fread(&superBloque, sizeof(SB), 1, search);
+    carpetaTemporal.i_block[14]=superBloque.s_first_blo;
+    fseek(search, superBloque.s_inode_start+sizeof(inode)*(superBloque.s_first_ino-1), SEEK_SET);
+    fwrite(&carpetaTemporal, sizeof(inode), 1, search);
+    fflush(search);
+    //marcar el apuntador indirecto ein bitmap
+    fseek(search, superBloque.s_bm_block_start + carpetaTemporal.i_block[14]*64 ,SEEK_SET);
+    fwrite("3",1, 1, search);
+    fflush(search);
+    //actualizar el superbloque
+    superBloque.s_first_blo++;
+    superBloque.s_free_blocks_count--;
+    fseek(search, partStart, SEEK_SET);
+    fwrite(&superBloque, sizeof(SB), 1, search);
+    fflush(search);
+    pointers API2;
+    for(int i=0;i<16;i++){
+        API2.b_pointers[i]=-1;
+        fseek(search, superBloque.s_block_start+carpetaTemporal.i_block[14]*64, SEEK_SET);
+        fwrite(&API2, 64, 1, search);
+        fflush(search);
+    }
+    for(int e=0;e<2;e++){
+        fseek(search, partStart, SEEK_SET);
+        fread(&superBloque, sizeof(SB), 1, search);
+        //marcar el apuntador indirecto ein bitmap
+        fseek(search, superBloque.s_bm_block_start + carpetaTemporal.i_block[14]*64 ,SEEK_SET);
+        fwrite("3",1, 1, search);
+        fflush(search);
+        //dirigir del indirecto doble al indirecto simple
+        API2.b_pointers[e]=superBloque.s_first_blo;
+        fseek(search, carpetaTemporal.i_block[14]*64+superBloque.s_block_start, SEEK_SET);
+        fwrite(&API2, 64, 1, search);
+        fflush(search);
+        content = fillAPI(search, partStart, superBloque, carpetaTemporal, API2.b_pointers[e], content);
+        if(content.length()==0)break;
+    }
+}
+
+string _MKFILE::fillAPI(FILE * search, int partStart, SB superBloque, inode carpetaTemporal, int pointerBlock, string content){
+    fseek(search, superBloque.s_bm_block_start + superBloque.s_first_blo, SEEK_SET);
+    fwrite("3",1, 1, search);
+    fflush(search);
+    //actualizar el superbloque
+    superBloque.s_first_blo++;
+    superBloque.s_free_blocks_count--;
+    fseek(search, partStart, SEEK_SET);
+    fwrite(&superBloque, sizeof(SB), 1, search);
+    fflush(search);     
+    pointers apuntadores;  
+    for(int i = 0;i<16;i++){
+        if(content.length()!=0){
+            fseek(search, partStart, SEEK_SET);
+            fread(&superBloque, sizeof(SB), 1, search);
+            apuntadores.b_pointers[i]=superBloque.s_first_blo;
+            fseek(search, superBloque.s_block_start+64*pointerBlock, SEEK_SET);
+            fwrite(&apuntadores, 64, 1, search);
             fflush(search);
             file_block contenido;
             for(int e=0;e<64;e++){
@@ -1066,7 +1164,6 @@ void _MKFILE::fillFile(FILE * search, int partStart, SB superBloque, inode carpe
             fseek(search, superBloque.s_block_start+64*(superBloque.s_first_blo), SEEK_SET);
             fwrite(&contenido, 64, 1, search);
             fflush(search);
-            cout << "el archivo contiene "<<contenido.b_content<<endl;
             //marcar en el bitmap de bloques
             fseek(search, superBloque.s_bm_block_start + superBloque.s_first_blo,SEEK_SET);
             fwrite("2",1, 1, search);
@@ -1076,10 +1173,13 @@ void _MKFILE::fillFile(FILE * search, int partStart, SB superBloque, inode carpe
             superBloque.s_free_blocks_count--;
             fseek(search, partStart, SEEK_SET);
             fwrite(&superBloque, sizeof(SB), 1, search);
-            fflush(search);               
-            if(content.length()==0)break;
-        }        
-    }else{
-
+            fflush(search);     
+        }else{
+            apuntadores.b_pointers[i]=-1;
+            fseek(search, superBloque.s_block_start+64*pointerBlock, SEEK_SET);
+            fwrite(&apuntadores, 64, 1, search);
+            fflush(search);
+        }
     }
+    return content;
 }
