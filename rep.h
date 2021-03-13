@@ -779,11 +779,11 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
             content=content+"inode"+to_string(inodeNo)+":f"+to_string(14)+"->pointers"+to_string(inodo.i_block[13])+";";
             content=content+"pointers"+to_string(inodo.i_block[13])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#ff8c00\">";
             content=content+"<tr><td colspan=\"2\">BLOQUE_"+to_string(inodo.i_block[13])+"</td></tr>";
-            for(int i =0;i<2;i++){
+            for(int i =0;i<16;i++){
                 content=content+"<tr><td>APD"+to_string(i)+"</td><td PORT=\"f"+to_string(i)+"\">"+to_string(API2.b_pointers[i])+"</td></tr>";  
             }
             content=content+"</table>>];";
-            for(int e =0;e<2;e++){
+            for(int e =0;e<16;e++){
                 if(API2.b_pointers[e]!=-1){
                     pointers API1;
                     fseek(search, superbloque.s_block_start+API2.b_pointers[e]*64, SEEK_SET);
@@ -796,6 +796,7 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
                     }
                     content=content+"</table>>];";
                     for(int i =0;i<16;i++){
+                        if(sizePrinted==inodo.i_size || API1.b_pointers[i]==-1)break;//si apunta a -1 igual se arruinaría el grafo así que mejor break
                         file_block file;
                         fseek(search, superbloque.s_block_start+ API1.b_pointers[i]*64, SEEK_SET);
                         fread(&file, 64, 1, search);
@@ -837,12 +838,12 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
             content=content+"inode"+to_string(inodeNo)+":f"+to_string(15)+"->pointers"+to_string(inodo.i_block[14])+";";
             content=content+"pointers"+to_string(inodo.i_block[14])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#ff8c00\">";
             content=content+"<tr><td colspan=\"2\">BLOQUE_"+to_string(inodo.i_block[14])+"</td></tr>";
-            for(int i =0;i<2;i++){
+            for(int i =0;i<16;i++){
                 content=content+"<tr><td>APD"+to_string(i)+"</td><td PORT=\"f"+to_string(i)+"\">"+to_string(API3.b_pointers[i])+"</td></tr>";  
             }
             content=content+"</table>>];";
 
-            for(int o=0;o<2;o++){
+            for(int o=0;o<16;o++){
                 if(API3.b_pointers[o]!=-1){
                     pointers API2;
                     fseek(search, superbloque.s_block_start+API3.b_pointers[o]*64, SEEK_SET);
@@ -850,12 +851,12 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
                     content=content+"pointers"+to_string(inodo.i_block[14])+":f"+to_string(o)+"->pointers"+to_string(API3.b_pointers[o])+";";
                     content=content+"pointers"+to_string(API3.b_pointers[o])+"[label=<<table BORDER=\"0\" CELLBORDER=\"1\" CELLSPACING=\"0\" BGCOLOR=\"#ff8c00\">";
                     content=content+"<tr><td colspan=\"2\">BLOQUE_"+to_string(API3.b_pointers[o])+"</td></tr>";
-                    for(int i =0;i<2;i++){
+                    for(int i =0;i<16;i++){
                         content=content+"<tr><td>APD"+to_string(i)+"</td><td PORT=\"f"+to_string(i)+"\">"+to_string(API2.b_pointers[i])+"</td></tr>";  
                     }
                     content=content+"</table>>];";
                     //return content;
-                    for(int e =0;e<2;e++){
+                    for(int e =0;e<16;e++){
                         if(API2.b_pointers[e]!=-1){
                             pointers API1;
                             fseek(search, superbloque.s_block_start+API2.b_pointers[e]*64, SEEK_SET);
@@ -868,6 +869,7 @@ string _REP::recorrerArbol(FILE* search, SB superbloque, inode inodo, string con
                             }
                             content=content+"</table>>];";
                             for(int i =0;i<16;i++){
+                                if(sizePrinted==inodo.i_size || API1.b_pointers[i]==-1)break;//si apunta a -1 igual se arruinaría el grafo así que mejor break
                                 file_block file;
                                 fseek(search, superbloque.s_block_start+ API1.b_pointers[i]*64, SEEK_SET);
                                 fread(&file, 64, 1, search);
