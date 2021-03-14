@@ -67,7 +67,7 @@ struct Journaling
         for(int i =0;i<superBloque.s_inodes_count;i++){
             fseek(search, partStart+sizeof(SB)+i*sizeof(Journaling), SEEK_SET);
             fread(&temp, sizeof(Journaling), 1, search);
-            if(temp.tipo!='1' && temp.tipo!='2'){//posición disponible
+            if(temp.tipo!='1' && temp.tipo!='2' && temp.tipo!='3' && temp.tipo!='4'){//posición disponible
                 return i;
             }
         }

@@ -51,6 +51,10 @@ void _REN::setName(string name, bool isCadena)
 };
 
 void _REN::exe(){
+    if(this->path=="" || this->name==""){
+        cout << "ERROR: Los parámetros path y name son obligatorios."<<endl;
+        return;
+    }
     string id = usuarioActivo.partitionID;
     int diskSpot = (int)id[3] - 65;
     int partSpot = id[2] - '0'; //se le resta uno para obotener la posición en el array

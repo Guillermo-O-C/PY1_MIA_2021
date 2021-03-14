@@ -18,6 +18,7 @@
 #include "mkfile.h"
 #include "ssl.h"
 #include "ren.h"
+#include "commands.h"
 
 using namespace std;
 extern int yylex(void);
@@ -39,6 +40,7 @@ _MKDIR *mkdirV;
 _MKFILE *mkfileV;
 _SSL * sslV;
 _REN * renV;
+_COMMANDS * commandsV;
 %}
 
 %start INIT
@@ -88,6 +90,8 @@ _REN * renV;
 %token<STRING> loss
 %token<STRING> recovery
 %token<STRING> ren
+%token<STRING> mv
+%token<STRING> dest
 
 %type<STRING> INIT
 %type<STRING> INSTRUCCION
@@ -112,6 +116,8 @@ _REN * renV;
 %type<STRING> MKFILEPARAM
 %type<STRING> RENP
 %type<STRING> RENPARAM
+%type<STRING> COMMANDP
+%type<STRING> COMMANDPARAM
 
 %define parse.error verbose
 %locations
@@ -149,6 +155,7 @@ INSTRUCCION:
     | ren {renV = new _REN();} RENP {renV->exe();}
     | loss guion R_id igual partition_id {sslV = new _SSL(); sslV->setId($5); sslV->simulateLoss();}
     | recovery guion R_id igual partition_id {sslV->setId($5); sslV->simulateRecovery();}
+    | mv {commandsV = new _COMMANDS();} COMMANDP {commandsV->exeMv();}
     | error {} 
 ;
 
@@ -282,6 +289,18 @@ RENPARAM :
     |   guion path igual cadena {renV->setPath($4, true);}
     |   guion name igual id {renV->setName($4, false);}
     |   guion name igual cadena {renV->setName($4, true);}
+;
+
+COMMANDP:
+    COMMANDP COMMANDPARAM
+    | COMMANDPARAM
+;
+
+COMMANDPARAM :
+        guion path igual ruta {commandsV->setPath($4, false);}
+    |   guion path igual cadena {commandsV->setPath($4, true);}
+    |   guion dest igual ruta {commandsV->setDest($4, false);}
+    |   guion dest igual cadena {commandsV->setDest($4, true);}
 ;
 %%
 void yyerror(const char *s)

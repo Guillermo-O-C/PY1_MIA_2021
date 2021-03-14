@@ -5,6 +5,7 @@
 #include "mkdir.h"
 #include "mkfile.h"
 #include "ren.h"
+#include "commands.h"
 using namespace std;
 
 class _SSL{
@@ -174,11 +175,10 @@ int diskSpot = (int)this->id[3]-65;
                         for(int e =2;e<superBloque.s_inodes_count;e++){
                             fseek(search, opciones[i].part_start+sizeof(SB)+e*sizeof(Journaling), SEEK_SET);
                             fread(&temp, sizeof(Journaling), 1, search);
-                            if(temp.tipo!='1' && temp.tipo!='2' && temp.tipo!='3'){//termina el journal
+                            if(temp.tipo!='1' && temp.tipo!='2' && temp.tipo!='3' && temp.tipo!='4'){//termina el journal
                                 cout << "La recuperación del sistema ha terminado."<<endl;
                                 break;
                             }
-                            cout << temp.tipo<<endl;
                             if(charToString(temp.tipo_operacion, 10)=="mkdir" || temp.tipo=='1'){
                                 _MKDIR mkdir;
                                 mkdir.setP();
@@ -199,6 +199,11 @@ int diskSpot = (int)this->id[3]-65;
                                 ren.setPath(charToString(temp.path,60), false);
                                 ren.setName(charToString(temp.contenido, 100), false);
                                 ren.exe();
+                            }else if(charToString(temp.tipo_operacion, 10)=="mv" || temp.tipo=='4'){
+                                _COMMANDS command;
+                                command.setPath(charToString(temp.path,60), false);
+                                command.setDest(charToString(temp.contenido, 100), false);
+                                command.exeMv();
                             }
                         } 
                         for(int e =puntoDeRetorno;e<superBloque.s_inodes_count;e++){
