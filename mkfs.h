@@ -155,21 +155,32 @@ void _MKFS::exe(){
                 }
                 lastStart=lastStart+3*n;
                 if(this->type=="full"){
+                    for(int e=0;e<superBloque.s_inodes_count;e++){
+                            fseek(search, superBloque.s_inode_start + e*sizeof(inode) , SEEK_SET);
+                            fwrite("0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", sizeof(inode), 1, search);
+                            fflush(search);
+                        }
+                    lastStart=lastStart+n*sizeof(inode);
+                        for(int e=0;e<superBloque.s_inodes_count*3;e++){
+                            fseek(search, superBloque.s_block_start+e*64, SEEK_SET);
+                            fwrite("000000000000000000000000000000000000000000000000000000000000000", 64, 1, search);
+                            fflush(search);
+                        }
+                    lastStart=lastStart+3*n*sizeof(folder_block);/*
                     //bloque de inodos
                     inode inodo;
-                    for(int e =lastStart; e<lastStart+n*sizeof(inode);e++){
+                    for(int e =lastStart; e<lastStart+n;e++){
                         fseek(search, e, SEEK_SET);
-                        fwrite("0", 1, 1, search);
+                        fwrite("0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", sizeof(inode), 1, search);
                         fflush(search);
                     }
-                    lastStart=lastStart+n*sizeof(inode);
                     //bloque de bloques
                     folder_block carpeta;
                     for(int e =lastStart; e<lastStart+3*n*64;e++){
                         fseek(search, e, SEEK_SET);
-                        fwrite("0", 1, 1, search);
+                        fwrite("000000000000000000000000000000000000000000000000000000000000000", 64, 1, search);
                         fflush(search);;
-                    }
+                    }*/
                     lastStart=lastStart+3*n*sizeof(folder_block);
                 }
                 //crear carpeta raiz y archivo users.txt        

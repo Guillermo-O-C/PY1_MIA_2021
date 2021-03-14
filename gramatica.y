@@ -17,6 +17,7 @@
 #include "mkdir.h"
 #include "mkfile.h"
 #include "ssl.h"
+#include "ren.h"
 
 using namespace std;
 extern int yylex(void);
@@ -37,6 +38,7 @@ _LOGIN *loginV;
 _MKDIR *mkdirV;
 _MKFILE *mkfileV;
 _SSL * sslV;
+_REN * renV;
 %}
 
 %start INIT
@@ -85,6 +87,7 @@ _SSL * sslV;
 %token<STRING> cont
 %token<STRING> loss
 %token<STRING> recovery
+%token<STRING> ren
 
 %type<STRING> INIT
 %type<STRING> INSTRUCCION
@@ -107,6 +110,8 @@ _SSL * sslV;
 %type<STRING> MKDIRPARAM
 %type<STRING> MKFILEP
 %type<STRING> MKFILEPARAM
+%type<STRING> RENP
+%type<STRING> RENPARAM
 
 %define parse.error verbose
 %locations
@@ -141,6 +146,7 @@ INSTRUCCION:
     | login {loginV = new _LOGIN();} LOGINP {loginV->exe();}
     | logout {loginV->logout();} 
     | mkfile {mkfileV = new _MKFILE();} MKFILEP {mkfileV->exe();}
+    | ren {renV = new _REN();} RENP {renV->exe();}
     | loss guion R_id igual partition_id {sslV = new _SSL(); sslV->setId($5); sslV->simulateLoss();}
     | recovery guion R_id igual partition_id {sslV->setId($5); sslV->simulateRecovery();}
     | error {} 
@@ -264,6 +270,18 @@ MKFILEPARAM :
     |   guion size igual numero {mkfileV->setSize(atoi($4));}
     |   guion cont igual ruta {mkfileV->setCont($4, false);}
     |   guion cont igual cadena {mkfileV->setCont($4, true);}
+;
+
+RENP:
+    RENP RENPARAM
+    | RENPARAM
+;
+
+RENPARAM :
+        guion path igual ruta {renV->setPath($4, false);}
+    |   guion path igual cadena {renV->setPath($4, true);}
+    |   guion name igual id {renV->setName($4, false);}
+    |   guion name igual cadena {renV->setName($4, true);}
 ;
 %%
 void yyerror(const char *s)

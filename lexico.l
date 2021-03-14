@@ -64,6 +64,7 @@ id ([a-zA-Z])([a-zA-Z]|[0-9]|"_")*
 "cont" {yylval.STRING = strdup(yytext);return (cont);};
 "loss" {yylval.STRING = strdup(yytext);return (loss);};
 "recovery" {yylval.STRING = strdup(yytext);return (recovery);};
+"ren" {yylval.STRING = strdup(yytext);return (ren);};
 {id} {yylval.STRING = strdup(yytext); return (id);};
 {ruta} {yylval.STRING = strdup(yytext); return (ruta);};
 . {}

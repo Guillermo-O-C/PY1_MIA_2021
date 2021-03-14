@@ -4,6 +4,7 @@
 #include "partitionStructs.h"
 #include "mkdir.h"
 #include "mkfile.h"
+#include "ren.h"
 using namespace std;
 
 class _SSL{
@@ -47,28 +48,24 @@ void _SSL::simulateLoss(){
                             cout <<"ERROR: No se puede usar el comando Loss sobre un sistema de archivos EXT2"<<endl;
                             return;
                         }
-                        cout << "Elminando bm_i"<<endl;
                         for(int e=0;e<superBloque.s_inodes_count;e++){
                             fseek(search, superBloque.s_bm_inode_start + e, SEEK_SET);
                             fwrite("0", 1, 1, search);
                             fflush(search);
                         }
-                        cout << "Elminando bm_b"<<endl;
                         for(int e=0;e<superBloque.s_blocks_count;e++){
                             fseek(search, superBloque.s_bm_block_start + e, SEEK_SET);
                             fwrite("0", 1, 1, search);
                             fflush(search);
                         }
-                        cout << "Elminando i"<<endl;
                         for(int e=0;e<superBloque.s_inodes_count;e++){
                             fseek(search, superBloque.s_inode_start + e*sizeof(inode) , SEEK_SET);
                             fwrite("0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", sizeof(inode), 1, search);
                             fflush(search);
                         }
-                        cout << "Elminando b"<<endl;
                         for(int e=0;e<superBloque.s_inodes_count*3;e++){
                             fseek(search, superBloque.s_block_start+e*64, SEEK_SET);
-                            fwrite("000000000000000000000000000000000000000000000000000000000000000", 1, 1, search);
+                            fwrite("000000000000000000000000000000000000000000000000000000000000000", 64, 1, search);
                             fflush(search);
                         }
                         cout <<"La partición "+this->id+" ha sufrido un fallo, usar el recovery para recuperar la información."<<endl; 
@@ -177,16 +174,17 @@ int diskSpot = (int)this->id[3]-65;
                         for(int e =2;e<superBloque.s_inodes_count;e++){
                             fseek(search, opciones[i].part_start+sizeof(SB)+e*sizeof(Journaling), SEEK_SET);
                             fread(&temp, sizeof(Journaling), 1, search);
-                            if(temp.tipo!='1' && temp.tipo!='2'){//termina el journal
+                            if(temp.tipo!='1' && temp.tipo!='2' && temp.tipo!='3'){//termina el journal
                                 cout << "La recuperación del sistema ha terminado."<<endl;
                                 break;
                             }
-                            if(charToString(temp.tipo_operacion, 10)=="mkdir" && temp.tipo=='1'){
+                            cout << temp.tipo<<endl;
+                            if(charToString(temp.tipo_operacion, 10)=="mkdir" || temp.tipo=='1'){
                                 _MKDIR mkdir;
                                 mkdir.setP();
                                 mkdir.setPath(charToString(temp.path, 60), false);
                                 mkdir.exe();
-                            }else if(charToString(temp.tipo_operacion, 10)=="mkfile" && temp.tipo=='2'){
+                            }else if(charToString(temp.tipo_operacion, 10)=="mkfile" || temp.tipo=='2'){
                                 _MKFILE mkfile;
                                 mkfile.setR();
                                 if(temp.size==-1){
@@ -196,6 +194,11 @@ int diskSpot = (int)this->id[3]-65;
                                 }
                                 mkfile.setPath(charToString(temp.path,60), false);
                                 mkfile.exe();
+                            }else if(charToString(temp.tipo_operacion, 10)=="ren" || temp.tipo=='3'){
+                                _REN ren;
+                                ren.setPath(charToString(temp.path,60), false);
+                                ren.setName(charToString(temp.contenido, 100), false);
+                                ren.exe();
                             }
                         } 
                         for(int e =puntoDeRetorno;e<superBloque.s_inodes_count;e++){
