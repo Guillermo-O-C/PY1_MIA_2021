@@ -62,6 +62,8 @@ id ([a-zA-Z])([a-zA-Z]|[0-9]|"_")*
 "mkdir" {yylval.STRING = strdup(yytext);return (mkdir);};
 "mkfile" {yylval.STRING = strdup(yytext);return (mkfile);};
 "cont" {yylval.STRING = strdup(yytext);return (cont);};
+"loss" {yylval.STRING = strdup(yytext);return (loss);};
+"recovery" {yylval.STRING = strdup(yytext);return (recovery);};
 {id} {yylval.STRING = strdup(yytext); return (id);};
 {ruta} {yylval.STRING = strdup(yytext); return (ruta);};
 . {}

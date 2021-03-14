@@ -16,6 +16,7 @@
 #include "login.h"
 #include "mkdir.h"
 #include "mkfile.h"
+#include "ssl.h"
 
 using namespace std;
 extern int yylex(void);
@@ -35,6 +36,7 @@ _MKFS * mkfsV;
 _LOGIN *loginV;
 _MKDIR *mkdirV;
 _MKFILE *mkfileV;
+_SSL * sslV;
 %}
 
 %start INIT
@@ -81,6 +83,8 @@ _MKFILE *mkfileV;
 %token<STRING> mkdir
 %token<STRING> mkfile
 %token<STRING> cont
+%token<STRING> loss
+%token<STRING> recovery
 
 %type<STRING> INIT
 %type<STRING> INSTRUCCION
@@ -135,9 +139,11 @@ INSTRUCCION:
     | mkfs {mkfsV = new _MKFS();} MKFSP {mkfsV->exe();}
     | mkdir {mkdirV = new _MKDIR();} MKDIRP {mkdirV->exe();}
     | login {loginV = new _LOGIN();} LOGINP {loginV->exe();}
-    | mkfile {mkfileV = new _MKFILE();} MKFILEP {mkfileV->exe();}
     | logout {loginV->logout();} 
-    | error {}
+    | mkfile {mkfileV = new _MKFILE();} MKFILEP {mkfileV->exe();}
+    | loss guion R_id igual partition_id {sslV = new _SSL(); sslV->setId($5); sslV->simulateLoss();}
+    | recovery guion R_id igual partition_id {sslV->setId($5); sslV->simulateRecovery();}
+    | error {} 
 ;
 
 MKDISKP:

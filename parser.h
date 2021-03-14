@@ -90,7 +90,9 @@ extern int yydebug;
     pause_ = 296,
     mkdir = 297,
     mkfile = 298,
-    cont = 299
+    cont = 299,
+    loss = 300,
+    recovery = 301
   };
 #endif
 
@@ -98,12 +100,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 110 "gramatica.y"
+#line 114 "gramatica.y"
 
     char*STRING;
     char*NUM;
 
-#line 107 "parser.h"
+#line 109 "parser.h"
 
 };
 typedef union YYSTYPE YYSTYPE;

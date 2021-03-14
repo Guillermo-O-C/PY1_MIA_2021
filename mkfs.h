@@ -128,7 +128,8 @@ void _MKFS::exe(){
                 fwrite(&superBloque, sizeof(SB), 1, search);
                 fflush(search);
                 int lastStart = opciones[i].part_start+sizeof(SB);
-                if(this->fs==3){
+                if(this->fs==3)lastStart=lastStart+n*sizeof(Journaling);
+                /*if(this->fs==3){//no se tiene que sobreescribir
                     Journaling journal;
                     for(int e =lastStart; e<lastStart+n*sizeof(Journaling);e=e+sizeof(Journaling)){
                         fseek(search, e, SEEK_SET);
@@ -136,7 +137,7 @@ void _MKFS::exe(){
                         fflush(search);
                     }
                     lastStart=lastStart+n*sizeof(Journaling);
-                }
+                }*/
                 //bitmap de inodos
                 //cout << "inode bitmap stars in "<<to_string(lastStart)<<endl;
                 for(int e=lastStart;e<lastStart+n;e++){
@@ -156,34 +157,20 @@ void _MKFS::exe(){
                 if(this->type=="full"){
                     //bloque de inodos
                     inode inodo;
-                    for(int e =lastStart; e<lastStart+n*sizeof(inode);e=e+sizeof(inode)){
+                    for(int e =lastStart; e<lastStart+n*sizeof(inode);e++){
                         fseek(search, e, SEEK_SET);
-                        fwrite(&inodo, sizeof(inode), 1, search);
+                        fwrite("0", 1, 1, search);
                         fflush(search);
                     }
                     lastStart=lastStart+n*sizeof(inode);
                     //bloque de bloques
                     folder_block carpeta;
-                    for(int e =lastStart; e<lastStart+n*sizeof(folder_block);e=e+sizeof(folder_block)){
+                    for(int e =lastStart; e<lastStart+3*n*64;e++){
                         fseek(search, e, SEEK_SET);
-                        fwrite(&carpeta, sizeof(folder_block), 1, search);
-                        fflush(search);
+                        fwrite("0", 1, 1, search);
+                        fflush(search);;
                     }
-                    lastStart=lastStart+n*sizeof(folder_block);
-                    file_block archivo;
-                    for(int e =lastStart; e<lastStart+n*sizeof(file_block);e=e+sizeof(file_block)){
-                        fseek(search, e, SEEK_SET);
-                        fwrite(&archivo, sizeof(file_block), 1, search);
-                        fflush(search);
-                    }
-                    lastStart=lastStart+n*sizeof(file_block);
-                    pointers pointer;
-                    for(int e =lastStart; e<lastStart+n*sizeof(pointers);e=e+sizeof(pointers)){
-                        fseek(search, e, SEEK_SET);
-                        fwrite(&inodo, sizeof(pointers), 1, search);
-                        fflush(search);
-                    }
-                    lastStart=lastStart+n*sizeof(pointers);
+                    lastStart=lastStart+3*n*sizeof(folder_block);
                 }
                 //crear carpeta raiz y archivo users.txt        
                 inode raiz;
@@ -236,6 +223,25 @@ void _MKFS::exe(){
                 fwrite("2", 1, 1, search);
                 fflush(search);
                 cout << "Se ha formateado el disco exitosasmente, ahora cuenta con un sistema de archivos EXT"+to_string(this->fs)+"."<<endl;
+                Journaling nuevo;
+                nuevo.size=0;
+                nuevo.tipo='1';
+                strcpy(nuevo.path,"/");
+                strcpy(nuevo.log_fecha, fechayhora);
+                strcpy(nuevo.tipo_operacion,"mkdir");
+                strcpy(nuevo.contenido, "");
+                fseek(search, opciones[i].part_start+sizeof(SB)+0*sizeof(Journaling), SEEK_SET);
+                fwrite(&nuevo, sizeof(Journaling), 1, search);
+                fflush(search);
+                nuevo.size=0;
+                nuevo.tipo='2';
+                strcpy(nuevo.path,"/users.txt");
+                strcpy(nuevo.log_fecha, fechayhora);
+                strcpy(nuevo.tipo_operacion,"mkfile");
+                strcpy(nuevo.contenido, "1,G,root\n1,U,root,root,123\n");
+                fseek(search, opciones[i].part_start+sizeof(SB)+1*sizeof(Journaling), SEEK_SET);
+                fwrite(&nuevo, sizeof(Journaling), 1, search);
+                fflush(search);
                 return;
             } 
         }        

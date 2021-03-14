@@ -5,6 +5,7 @@
 #include "partitionStructs.h"
 #include <vector>
 using namespace std;
+#pragma once
 
 class _MKDIR
 {
@@ -26,6 +27,7 @@ public:
     string charToString(char *name, int loops);
     int searchForFolder(FILE *search, SB superBloque, inode carpetaTemporal, string folderName);
     void createFolder(FILE *search, int partStart, SB superBloque, inode carpetaTemporal, string folderName, int abuelo, int padre);
+    void addToJournal(FILE *search, int partStart, SB superBloque, inode carpetaTemporal);
 };
 void _MKDIR::setPath(string path, bool isCadena)
 {
@@ -103,6 +105,7 @@ void _MKDIR::exe()
                             padre = superBloque.s_first_ino;
                             createFolder(search, opciones[i].part_start, superBloque, carpetaTemporal, folderName, abuelo, padre);
                             inodeLocation = superBloque.s_first_ino;
+                            if(e == carpetas.size()-1 && superBloque.s_filesystem_type==3) addToJournal(search, opciones[i].part_start, superBloque, carpetaTemporal);
                         }
                         else
                         {
@@ -680,4 +683,24 @@ void _MKDIR::createFolder(FILE *search, int partStart, SB superBloque, inode car
         }
     }
     cout << "ERROR:No se ha podido crear la carpeta " << folderName << endl;
+}
+
+void _MKDIR::addToJournal(FILE *search, int partStart, SB superBloque, inode carpetaTemporal){
+    Journaling nuevo;
+    int posicion = nuevo.nextAvailable(search, partStart);
+    time_t t;
+    struct tm *tm;
+    char fechayhora[16];
+    t = time(NULL);
+    tm = localtime(&t);
+    nuevo.size=0;
+    nuevo.tipo='1';
+    strftime(fechayhora, 20, "%d/%m/%Y %H:%M", tm);
+    strcpy(nuevo.path,this->path.c_str());
+    strcpy(nuevo.log_fecha, fechayhora);
+    strcpy(nuevo.tipo_operacion,"mkdir");
+    strcpy(nuevo.contenido, "");
+    fseek(search, partStart+sizeof(SB)+posicion*sizeof(Journaling), SEEK_SET);
+    fwrite(&nuevo, sizeof(Journaling), 1, search);
+    fflush(search);
 }

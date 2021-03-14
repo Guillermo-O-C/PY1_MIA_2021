@@ -1,17 +1,6 @@
 #include <iostream>
 #pragma once
 using namespace std;
-
-struct Journaling
-{
-    char tipo_operacion[10] = "";
-    char tipo = '0';
-    char path[40] = "";
-    char contenido[100] = "";
-    char log_fecha[16] = "";
-    int size = 0;
-};
-
 struct SB {
     int s_filesystem_type=-1;
     int s_inodes_count=-1;
@@ -60,4 +49,28 @@ struct file_block {
 
 struct pointers {
     int b_pointers[16]={-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1};
+};
+
+struct Journaling
+{
+    char tipo_operacion[10] = "";
+    char tipo = '\0';
+    char path[60] = "";
+    char contenido[100] = "";
+    char log_fecha[16] = "";
+    int size = 0;
+    int nextAvailable(FILE * search, int partStart){
+        SB superBloque;
+        fseek(search, partStart, SEEK_SET);
+        fread(&superBloque, sizeof(SB), 1, search);
+        Journaling temp;
+        for(int i =0;i<superBloque.s_inodes_count;i++){
+            fseek(search, partStart+sizeof(SB)+i*sizeof(Journaling), SEEK_SET);
+            fread(&temp, sizeof(Journaling), 1, search);
+            if(temp.tipo!='1' && temp.tipo!='2'){//posición disponible
+                return i;
+            }
+        }
+        return 0;
+    }
 };

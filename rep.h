@@ -7,7 +7,6 @@ using namespace std;
 #include "mountStructs.h"
 #include "partitionStructs.h"
 
-
 class _REP{
     private:
     string name;
@@ -38,10 +37,14 @@ class _REP{
     void graphBlocks();
     void graphTree();
     void graphSB();
+    void graphFile();
+    void graphLs();
+    void graphJournaling();
     string toUpperCase(string cadena);
     string nameToString(char * name);
     string recorrerArbol(FILE* search,SB superbloque, inode inodo, string content, int inodoNo);
     string folderToString(char * name);
+    string nToString(char * name, int n);
     string toHex(int hex);
 };
 
@@ -116,6 +119,15 @@ void _REP::exe(){
     }
     else if(this->name=="sb"){
         graphSB();
+    }
+    else if(this->name=="file"){
+        graphFile();
+    }
+    else if(this->name=="ls"){
+        graphLs();
+    }
+    else if(this->name=="journaling"){
+        graphJournaling();
     }
     else{
         cout <<"No se reconoce el name "<<this->name<<" como un reporte." <<endl;
@@ -207,8 +219,7 @@ void _REP::graphDisk(){
 
     for(int i =0;i<4;i++){
         if(particiones[i].part_size==0) continue;
-        int porcentaje = particiones[i].part_size*100;
-        porcentaje=porcentaje/mbr.mbr_tamanio;
+        int porcentaje = particiones[i].part_size/(float)mbr.mbr_tamanio*100;
         if(particiones[i].part_status=='0'){
             graph=graph+"<td rowspan=\"2\">Libre <br/>"+to_string(porcentaje)+"%</td>";
         }else{
@@ -299,7 +310,6 @@ void _REP::graphBM_Inodos(){
                     fseek(search, e, SEEK_SET);
                     char byte;
                     fread(&byte, 1, 1, search);
-                    if(byte=='\0')cout<<to_string(e)<<" es null"<<endl;
                     bitmap=bitmap+byte;
                     row++;
                     if(row==20){
@@ -970,6 +980,72 @@ void _REP::graphSB(){
     }
 };
 
+void _REP::graphFile(){
+    FILE *search =  fopen(this->diskPath.c_str(), "rb+");
+    MBR mbr;
+    fread(&mbr, sizeof(MBR), 1, search);
+    partition opciones[4] = {mbr.mbr_partition_1, mbr.mbr_partition_2, mbr.mbr_partition_3,mbr.mbr_partition_4};
+    string name = discosMontados[diskSpot].particiones[partSpot].name; 
+    for(int i =0;i<4;i++){
+        if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
+            if(name==nameToString(opciones[i].part_name)){
+            }
+        }
+    }
+};
+
+void _REP::graphLs(){
+    FILE *search =  fopen(this->diskPath.c_str(), "rb+");
+    MBR mbr;
+    fread(&mbr, sizeof(MBR), 1, search);
+    partition opciones[4] = {mbr.mbr_partition_1, mbr.mbr_partition_2, mbr.mbr_partition_3,mbr.mbr_partition_4};
+    string name = discosMontados[diskSpot].particiones[partSpot].name; 
+    for(int i =0;i<4;i++){
+        if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
+            if(name==nameToString(opciones[i].part_name)){
+            }
+        }
+    }
+};
+
+void _REP::graphJournaling(){
+    FILE *search =  fopen(this->diskPath.c_str(), "rb+");
+    MBR mbr;
+    fread(&mbr, sizeof(MBR), 1, search);
+    partition opciones[4] = {mbr.mbr_partition_1, mbr.mbr_partition_2, mbr.mbr_partition_3,mbr.mbr_partition_4};
+    string name = discosMontados[diskSpot].particiones[partSpot].name; 
+    for(int i =0;i<4;i++){
+        if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
+            if(name==nameToString(opciones[i].part_name)){
+                SB superBloque;
+                fseek(search, opciones[i].part_start, SEEK_SET);
+                fread(&superBloque, sizeof(SB), 1, search);
+                Journaling temp;
+                string graph = "digraph G {\n node [ shape=box fontname=Helvetica ] ";
+                string arrow="";
+                for(int e =0;e<superBloque.s_inodes_count;e++){
+                    fseek(search, opciones[i].part_start+sizeof(SB)+e*sizeof(Journaling), SEEK_SET);
+                    fread(&temp, sizeof(Journaling), 1, search);
+                    if(temp.tipo!='1' && temp.tipo!='2'){//sin usar
+                        break;
+                    }
+                    if(e!=0)arrow=arrow+"->";
+                    graph=graph+"journal"+to_string(e)+"[label = <<table><tr><td colspan=\"6\">Journal "+to_string(e)+"-"+this->id+"</td></tr>";
+                    graph=graph+"<tr><td>Tipo de Operacion</td><td>Tipo</td><td>Path</td><td>Contenido</td><td>Size</td><td>Fecha</td></tr>";
+                    graph=graph+"<tr><td>"+nToString(temp.tipo_operacion, 10)+"</td>";
+                    graph=graph+"<td>"+temp.tipo+"</td>";
+                    graph=graph+"<td>"+nToString(temp.path,60)+"</td>";
+                    graph=graph+"<td>"+nToString(temp.contenido, 100)+"</td>";
+                    graph=graph+"<td>"+to_string(temp.size)+"</td>";
+                    graph=graph+"<td>"+nToString(temp.log_fecha, 16)+"</td></tr></table>>];\n";
+                    arrow=arrow+"journal"+to_string(e);
+                }
+                Print(graph+arrow+";\n}", "Journaling");
+            }
+        }
+    }
+};
+
 void _REP::Print(string content, string name){
     FILE *searchFile =  fopen((this->path.substr(0, this->path.length()-4)+".txt").c_str(), "wb+");
     if(searchFile==NULL){
@@ -1031,6 +1107,15 @@ string _REP::nameToString(char * name){
 string _REP::folderToString(char * name){
     string str;
     for(int i=0;i < 12;i++){
+        if(name[i]==int(NULL)) break;
+        str=str+name[i];
+    }
+    return str;
+}
+
+string _REP::nToString(char * name, int n){
+    string str;
+    for(int i=0;i < n;i++){
         if(name[i]==int(NULL)) break;
         str=str+name[i];
     }

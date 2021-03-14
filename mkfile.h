@@ -5,7 +5,7 @@
 #include "partitionStructs.h"
 #include <vector>
 using namespace std;
-
+#pragma once
 class _MKFILE
 {
 private:
@@ -35,6 +35,7 @@ public:
     void createFile(FILE *search, int partStart, SB superBloque, inode carpetaTemporal, string folderName, int abuelo, int padre);
     void fillFile(FILE *search, int partStart, SB superBloque, inode carpetaTemporal);
     string fillAPI(FILE *search, int partStart, SB superBloque, inode carpetaTemporal, int pointerBlock, string content);
+    void addToJournal(FILE *search, int partStart, SB superBloque, inode carpetaTemporal);
 };
 
 void _MKFILE::setPath(string path, bool isCadena)
@@ -136,8 +137,8 @@ void _MKFILE::exe()
                             fread(&carpetaTemporal, sizeof(inode), 1, search);
                             fseek(search, opciones[i].part_start, SEEK_SET);
                             fread(&superBloque, sizeof(SB), 1, search);
-                            if (this->size == 0 && this->cont == "")
-                                return;                                                             //evita entrar al método de relleno
+                            if(superBloque.s_filesystem_type==3) addToJournal(search, opciones[i].part_start, superBloque, carpetaTemporal);
+                            if (this->size == 0 && this->cont == "")return;                                                             //evita entrar al método de relleno
                             fillFile(search, opciones[i].part_start, superBloque, carpetaTemporal); //el último inodo es el del archivo
                             return;
                         }
@@ -734,6 +735,7 @@ void _MKFILE::createFolder(FILE *search, int partStart, SB superBloque, inode ca
     }
     cout << "ERROR:No se ha podido crear la carpeta " << folderName << endl;
 }
+
 int _MKFILE::searchFile(FILE *search, SB superBloque, inode carpetaTemporal, string folderName)
 {
     for (int j = 0; j < 12; j++)
@@ -1475,4 +1477,29 @@ string _MKFILE::fillAPI(FILE *search, int partStart, SB superBloque, inode carpe
         }
     }
     return content;
+}
+
+void _MKFILE::addToJournal(FILE *search, int partStart, SB superBloque, inode carpetaTemporal){
+    Journaling nuevo;
+    int posicion = nuevo.nextAvailable(search, partStart);
+    time_t t;
+    struct tm *tm;
+    char fechayhora[16];
+    t = time(NULL);
+    tm = localtime(&t);
+    if(this->cont!=""){ 
+        nuevo.size=-1;
+        strcpy(nuevo.contenido, this->cont.c_str());
+    }else{
+        nuevo.size=this->size;
+        strcpy(nuevo.contenido, "");
+    }
+    nuevo.tipo='2';
+    strftime(fechayhora, 20, "%d/%m/%Y %H:%M", tm);
+    strcpy(nuevo.path,this->path.c_str());
+    strcpy(nuevo.log_fecha, fechayhora);
+    strcpy(nuevo.tipo_operacion,"mkfile");
+    fseek(search, partStart+sizeof(SB)+posicion*sizeof(Journaling), SEEK_SET);
+    fwrite(&nuevo, sizeof(Journaling), 1, search);
+    fflush(search);
 }
