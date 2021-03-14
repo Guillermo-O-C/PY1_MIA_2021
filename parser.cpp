@@ -547,16 +547,16 @@ union yyalloc
 /* YYFINAL -- State number of the termination state.  */
 #define YYFINAL  33
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   215
+#define YYLAST   201
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  47
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  31
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  95
+#define YYNRULES  96
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  190
+#define YYNSTATES  191
 
 #define YYUNDEFTOK  2
 #define YYMAXUTOK   301
@@ -614,10 +614,10 @@ static const yytype_int16 yyrline[] =
      146,   150,   151,   155,   156,   157,   158,   159,   163,   164,
      168,   169,   173,   174,   178,   179,   180,   181,   182,   183,
      184,   185,   186,   187,   188,   192,   193,   197,   198,   199,
-     200,   201,   202,   205,   206,   210,   211,   212,   213,   217,
-     218,   222,   223,   224,   228,   229,   233,   234,   235,   236,
-     237,   238,   239,   243,   244,   248,   249,   250,   254,   255,
-     259,   260,   261,   262,   263,   264
+     200,   201,   202,   203,   207,   208,   212,   213,   214,   215,
+     219,   220,   224,   225,   226,   230,   231,   235,   236,   237,
+     238,   239,   240,   241,   245,   246,   250,   251,   252,   256,
+     257,   261,   262,   263,   264,   265,   266
 };
 #endif
 
@@ -668,24 +668,25 @@ static const yytype_int16 yytoknum[] =
 static const yytype_int16 yypact[] =
 {
       11,   -22,   -22,   -22,   -22,   -22,    63,   -22,   -22,   -22,
-     -22,    73,   -22,   -22,   -22,    76,    80,    71,     0,   -22,
-      90,    91,    93,    94,    36,    99,   100,   101,    95,   102,
-     104,    74,    75,   -22,   -22,    66,    90,   -22,    97,    91,
-     -22,    84,    93,   -22,   -10,    94,   -22,   107,   -14,    99,
-     -22,   -21,   100,   -22,    49,   101,   -22,   108,    -2,   102,
-     -22,    22,   104,   -22,   109,   110,   111,   112,   113,   114,
-     -22,   115,   -22,   116,   117,   118,   119,   120,   121,   122,
-     123,   -22,   124,   125,   -22,    96,   126,   127,   128,   -22,
-     130,   131,   132,   -22,   133,   134,   135,   136,   -22,     2,
-     -22,   137,   -22,   138,   -22,   139,   140,   -22,   129,   141,
-     144,   142,   143,     9,    13,   145,   146,   147,    15,    59,
-     148,    61,   149,    20,    65,   -22,   150,   151,   152,    68,
-      60,   153,    25,   154,    38,   155,   -22,   -22,    45,   156,
-      54,    55,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,
+     -22,    66,   -22,   -22,   -22,    69,    70,    73,     0,   -22,
+      71,    72,    76,    80,    41,    89,    94,    95,    90,    97,
+     106,    75,    77,   -22,   -22,   100,    71,   -22,   102,    72,
+     -22,    88,    76,   -22,   -10,    80,   -22,    87,   -14,    89,
+     -22,   -21,    94,   -22,    49,    95,   -22,   110,    -2,    97,
+     -22,    22,   106,   -22,   111,   112,   113,   114,   115,   116,
+     -22,   117,   -22,   118,   119,   120,   121,   122,   123,   124,
+     125,   -22,   126,   127,   -22,    96,   128,   130,   131,   -22,
+     132,   133,   134,   -22,   135,   136,   137,   138,   -22,     2,
+     -22,   139,   -22,   140,   -22,   141,   142,   -22,   129,   143,
+     146,   144,   147,     9,    13,   148,   149,   150,    15,    59,
+     151,    61,   152,    20,    65,   -22,   153,   154,   145,    68,
+      60,   155,    25,   156,    56,    45,   -22,   -22,    54,   157,
+      55,    57,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,
      -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,
-     -22,   -22,   -22,   -22,   -22,   -22,   -22,   157,   -22,   -22,
-     -22,   159,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,
-     -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22
+     -22,   -22,   -22,   -22,   -22,   -22,   -22,   159,   -22,   -22,
+     -22,   158,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,
+     -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,   -22,
+     -22
 };
 
   /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -697,30 +698,31 @@ static const yytype_int8 yydefact[] =
       11,     0,    15,    21,    26,     0,     0,     0,     0,     4,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     1,     3,     0,     6,    32,     0,     8,
-      39,     0,    10,    43,     0,    17,    64,     0,     0,    20,
-      70,     0,    24,    75,     0,    12,    56,     0,     0,    22,
-      84,     0,    27,    89,     0,     0,     0,     0,     0,     0,
+      39,     0,    10,    43,     0,    17,    65,     0,     0,    20,
+      71,     0,    24,    76,     0,    12,    56,     0,     0,    22,
+      85,     0,    27,    90,     0,     0,     0,     0,     0,     0,
       31,     0,    38,     0,     0,     0,     0,     0,     0,     0,
-       0,    42,     0,     0,    63,     0,     0,     0,     0,    69,
-       0,     0,     0,    74,     0,     0,     0,     0,    55,     0,
-      85,     0,    83,     0,    90,     0,     0,    88,     0,     0,
+       0,    42,     0,     0,    64,     0,     0,     0,     0,    70,
+       0,     0,     0,    75,     0,     0,     0,     0,    55,     0,
+      86,     0,    84,     0,    91,     0,     0,    89,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
        0,     0,     0,     0,     0,    18,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,    13,    14,     0,     0,
        0,     0,    28,    29,    33,    34,    35,    37,    36,    41,
       40,    44,    48,    45,    54,    53,    47,    46,    49,    51,
-      50,    52,    68,    67,    66,    65,    72,     0,    71,    78,
-      77,    81,    82,    79,    76,    58,    59,    57,    60,    61,
-      62,    87,    86,    93,    92,    91,    95,    94,    73,    80
+      50,    52,    69,    68,    67,    66,    73,     0,    72,    79,
+      78,    82,    83,    80,    77,    58,    59,    57,    60,    61,
+      63,    62,    88,    87,    94,    93,    92,    96,    95,    74,
+      81
 };
 
   /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int16 yypgoto[] =
 {
-     -22,   -22,   -22,   158,   -22,   -22,   -22,   -22,   -22,   -22,
-     -22,   -22,   -22,   -22,   160,   -22,   161,   -22,   162,   -22,
-      98,   -22,   105,   -22,   106,   -22,   163,   -22,    92,   -22,
-      87
+     -22,   -22,   -22,   160,   -22,   -22,   -22,   -22,   -22,   -22,
+     -22,   -22,   -22,   -22,   161,   -22,   162,   -22,   108,   -22,
+      98,   -22,   107,   -22,   105,   -22,   104,   -22,    99,   -22,
+     101
 };
 
   /* YYDEFGOTO[NTERM-NUM].  */
@@ -741,24 +743,23 @@ static const yytype_int16 yytable[] =
       87,   101,     1,   147,     3,     4,    92,   149,     2,   154,
        5,     6,     7,    88,   162,     3,     4,     8,     9,   175,
      103,     5,     6,     7,   104,   105,    10,   137,     8,     9,
-      11,    12,    13,    14,   148,    15,    16,    10,   150,   181,
-     155,    11,    12,    13,    14,   163,    15,    16,   184,   186,
-     176,   178,    94,   171,   172,   159,   106,    95,    24,   164,
-     156,    33,   169,    47,    66,    67,    68,   179,    28,    69,
-     182,    31,   157,   173,   160,    32,    96,    97,   165,   185,
-     187,   170,    73,    74,    75,    35,    38,    76,    41,    44,
-      77,    78,    79,    80,    48,    51,    54,    58,    57,    61,
-      71,    64,    65,    85,    99,   108,   109,   110,   111,   112,
-     113,   114,   115,   116,   117,   118,   119,   120,   121,   122,
-     123,   124,   126,   127,   128,   125,   129,   130,   131,   132,
-     133,   134,   135,   138,   139,   140,   141,   144,   151,   107,
-      84,   102,   161,    98,   167,    89,     0,     0,     0,   183,
-       0,     0,     0,     0,     0,   145,   146,     0,   142,   152,
-     153,   158,     0,   166,     0,     0,    34,   177,     0,     0,
-     143,   188,   189,     0,     0,     0,     0,     0,     0,     0,
-     180,   168,   174,     0,     0,     0,    70,     0,     0,     0,
-      72,     0,     0,     0,    81,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,    93
+      11,    12,    13,    14,   148,    15,    16,    10,   150,   180,
+     155,    11,    12,    13,    14,   163,    15,    16,   182,   185,
+     176,   187,    94,   171,   172,   159,   106,    95,    24,   164,
+     156,    28,   169,    33,    31,    32,    35,    38,    47,   178,
+     181,    41,   157,   173,   160,    44,    96,    97,   165,   183,
+     186,   170,   188,    85,    48,   179,    73,    74,    75,    51,
+      54,    76,    58,    57,    77,    78,    79,    80,    66,    67,
+      68,    61,    64,    69,    65,    71,    99,   108,   109,   110,
+     111,   112,   113,   114,   115,   116,   117,   118,   119,   120,
+     121,   122,   123,   124,   126,   125,   127,   128,   129,   130,
+     131,   132,   133,   134,   135,   138,   139,   140,   141,   144,
+      81,   151,    84,    98,    89,   161,    93,   167,   102,     0,
+     184,     0,     0,   107,     0,     0,     0,   145,   142,     0,
+     146,     0,   152,   153,   158,     0,   166,     0,    34,   177,
+       0,   190,   143,   189,   168,     0,     0,     0,     0,     0,
+       0,     0,     0,     0,   174,     0,     0,    70,     0,     0,
+       0,    72
 };
 
 static const yytype_int8 yycheck[] =
@@ -769,22 +770,21 @@ static const yytype_int8 yycheck[] =
        8,    20,    21,    22,    12,    13,    36,    35,    27,    28,
       40,    41,    42,    43,    35,    45,    46,    36,    35,     4,
       35,    40,    41,    42,    43,    35,    45,    46,     4,     4,
-      35,    23,    13,     3,     4,     4,    44,    18,     5,     4,
-      11,     0,     4,    37,     8,     9,    10,    39,     5,    13,
+      35,     4,    13,     3,     4,     4,    44,    18,     5,     4,
+      11,     5,     4,     0,     5,     5,     5,     5,    37,    23,
       35,     5,    23,    23,    23,     5,    37,    38,    23,    35,
-      35,    23,     8,     9,    10,     5,     5,    13,     5,     5,
-      16,    17,    18,    19,     5,     5,     5,     5,    13,     5,
-      13,    37,    37,     6,     6,     6,     6,     6,     6,     6,
+      35,    23,    35,     6,     5,    39,     8,     9,    10,     5,
+       5,    13,     5,    13,    16,    17,    18,    19,     8,     9,
+      10,     5,    37,    13,    37,    13,     6,     6,     6,     6,
        6,     6,     6,     6,     6,     6,     6,     6,     6,     6,
        6,     6,     6,     6,     6,    39,     6,     6,     6,     6,
-       6,     6,     6,     6,     6,     6,     6,     3,     3,    62,
-      45,    59,     3,    55,     3,    49,    -1,    -1,    -1,     3,
-      -1,    -1,    -1,    -1,    -1,    23,    23,    -1,    39,    23,
-      23,    23,    -1,    23,    -1,    -1,    18,    23,    -1,    -1,
-      39,    24,    23,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-      35,    39,    39,    -1,    -1,    -1,    36,    -1,    -1,    -1,
-      39,    -1,    -1,    -1,    42,    -1,    -1,    -1,    -1,    -1,
-      -1,    -1,    -1,    -1,    -1,    52
+       6,     6,     6,     6,     6,     6,     6,     6,     6,     3,
+      42,     3,    45,    55,    49,     3,    52,     3,    59,    -1,
+       3,    -1,    -1,    62,    -1,    -1,    -1,    23,    39,    -1,
+      23,    -1,    23,    23,    23,    -1,    23,    -1,    18,    23,
+      -1,    23,    39,    24,    39,    -1,    -1,    -1,    -1,    -1,
+      -1,    -1,    -1,    -1,    39,    -1,    -1,    36,    -1,    -1,
+      -1,    39
 };
 
   /* YYSTOS[STATE-NUM] -- The (internal number of the) accessing
@@ -809,7 +809,8 @@ static const yytype_int8 yystos[] =
       35,     3,    23,    23,     4,    35,    11,    23,    23,     4,
       23,     3,     4,    35,     4,    23,    23,     3,    39,     4,
       23,     3,     4,    23,    39,     4,    35,    23,    23,    39,
-      35,     4,    35,     3,     4,    35,     4,    35,    24,    23
+       4,    35,     4,    35,     3,     4,    35,     4,    35,    24,
+      23
 };
 
   /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
@@ -821,10 +822,10 @@ static const yytype_int8 yyr1[] =
       50,    60,    60,    61,    61,    61,    61,    61,    62,    62,
       63,    63,    64,    64,    65,    65,    65,    65,    65,    65,
       65,    65,    65,    65,    65,    66,    66,    67,    67,    67,
-      67,    67,    67,    68,    68,    69,    69,    69,    69,    70,
-      70,    71,    71,    71,    72,    72,    73,    73,    73,    73,
-      73,    73,    73,    74,    74,    75,    75,    75,    76,    76,
-      77,    77,    77,    77,    77,    77
+      67,    67,    67,    67,    68,    68,    69,    69,    69,    69,
+      70,    70,    71,    71,    71,    72,    72,    73,    73,    73,
+      73,    73,    73,    73,    74,    74,    75,    75,    75,    76,
+      76,    77,    77,    77,    77,    77,    77
 };
 
   /* YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.  */
@@ -836,10 +837,10 @@ static const yytype_int8 yyr2[] =
        1,     2,     1,     4,     4,     4,     4,     4,     2,     1,
        4,     4,     2,     1,     4,     4,     4,     4,     4,     4,
        4,     4,     4,     4,     4,     2,     1,     4,     4,     4,
-       4,     4,     4,     2,     1,     4,     4,     4,     4,     2,
-       1,     4,     4,     5,     2,     1,     4,     4,     4,     4,
-       5,     4,     4,     2,     1,     2,     4,     4,     2,     1,
-       2,     4,     4,     4,     4,     4
+       4,     4,     4,     4,     2,     1,     4,     4,     4,     4,
+       2,     1,     4,     4,     5,     2,     1,     4,     4,     4,
+       4,     5,     4,     4,     2,     1,     2,     4,     4,     2,
+       1,     2,     4,     4,     4,     4,     4
 };
 
 
@@ -1632,443 +1633,449 @@ yyreduce:
   case 5:
 #line 130 "gramatica.y"
            {mkdiskV = new _MKDISK();}
-#line 1636 "parser.cpp"
+#line 1637 "parser.cpp"
     break;
 
   case 6:
 #line 130 "gramatica.y"
                                               {mkdiskV->exe();/*realiza la creación del disco*/}
-#line 1642 "parser.cpp"
+#line 1643 "parser.cpp"
     break;
 
   case 7:
 #line 131 "gramatica.y"
              {rmdiskV = new _RMDISK();}
-#line 1648 "parser.cpp"
+#line 1649 "parser.cpp"
     break;
 
   case 8:
 #line 131 "gramatica.y"
                                                 {rmdiskV->exe();/*realiza la eliminación del disco*/}
-#line 1654 "parser.cpp"
+#line 1655 "parser.cpp"
     break;
 
   case 9:
 #line 132 "gramatica.y"
             {fdiskV = new _FDISK();}
-#line 1660 "parser.cpp"
+#line 1661 "parser.cpp"
     break;
 
   case 10:
 #line 132 "gramatica.y"
                                             {fdiskV->exe();/*realiza la eliminación del disco*/}
-#line 1666 "parser.cpp"
+#line 1667 "parser.cpp"
     break;
 
   case 11:
 #line 133 "gramatica.y"
           {repV = new _REP();}
-#line 1672 "parser.cpp"
+#line 1673 "parser.cpp"
     break;
 
   case 12:
 #line 133 "gramatica.y"
                                     {repV->exe();/*Imprime los reportes*/}
-#line 1678 "parser.cpp"
+#line 1679 "parser.cpp"
     break;
 
   case 13:
 #line 134 "gramatica.y"
                                    {execV = new _EXEC(); execV->setPath((yyvsp[0].STRING), true); execV->exe();}
-#line 1684 "parser.cpp"
+#line 1685 "parser.cpp"
     break;
 
   case 14:
 #line 135 "gramatica.y"
                                  {execV = new _EXEC(); execV->setPath((yyvsp[0].STRING), false); execV->exe();}
-#line 1690 "parser.cpp"
+#line 1691 "parser.cpp"
     break;
 
   case 15:
 #line 136 "gramatica.y"
-             {cout << "\nLa ejecución del script se ha pausado, por favor presiona cualquier tecla para continuar."; cin.get();}
-#line 1696 "parser.cpp"
+             {cout << "\nLa ejecución del script se ha pausado, por favor presiona cualquier tecla para continuar."<<endl; cin.get();}
+#line 1697 "parser.cpp"
     break;
 
   case 16:
 #line 137 "gramatica.y"
             {mountV = new _MOUNT();}
-#line 1702 "parser.cpp"
+#line 1703 "parser.cpp"
     break;
 
   case 17:
 #line 137 "gramatica.y"
                                             {mountV->exe();/*realiza la eliminación del disco*/}
-#line 1708 "parser.cpp"
+#line 1709 "parser.cpp"
     break;
 
   case 18:
 #line 138 "gramatica.y"
                                             {mountV->unmount((yyvsp[0].STRING)); }
-#line 1714 "parser.cpp"
+#line 1715 "parser.cpp"
     break;
 
   case 19:
 #line 139 "gramatica.y"
            {mkfsV = new _MKFS();}
-#line 1720 "parser.cpp"
+#line 1721 "parser.cpp"
     break;
 
   case 20:
 #line 139 "gramatica.y"
                                         {mkfsV->exe();}
-#line 1726 "parser.cpp"
+#line 1727 "parser.cpp"
     break;
 
   case 21:
 #line 140 "gramatica.y"
             {mkdirV = new _MKDIR();}
-#line 1732 "parser.cpp"
+#line 1733 "parser.cpp"
     break;
 
   case 22:
 #line 140 "gramatica.y"
                                             {mkdirV->exe();}
-#line 1738 "parser.cpp"
+#line 1739 "parser.cpp"
     break;
 
   case 23:
 #line 141 "gramatica.y"
             {loginV = new _LOGIN();}
-#line 1744 "parser.cpp"
+#line 1745 "parser.cpp"
     break;
 
   case 24:
 #line 141 "gramatica.y"
                                             {loginV->exe();}
-#line 1750 "parser.cpp"
+#line 1751 "parser.cpp"
     break;
 
   case 25:
 #line 142 "gramatica.y"
              {loginV->logout();}
-#line 1756 "parser.cpp"
+#line 1757 "parser.cpp"
     break;
 
   case 26:
 #line 143 "gramatica.y"
              {mkfileV = new _MKFILE();}
-#line 1762 "parser.cpp"
+#line 1763 "parser.cpp"
     break;
 
   case 27:
 #line 143 "gramatica.y"
                                                 {mkfileV->exe();}
-#line 1768 "parser.cpp"
+#line 1769 "parser.cpp"
     break;
 
   case 28:
 #line 144 "gramatica.y"
                                          {sslV = new _SSL(); sslV->setId((yyvsp[0].STRING)); sslV->simulateLoss();}
-#line 1774 "parser.cpp"
+#line 1775 "parser.cpp"
     break;
 
   case 29:
 #line 145 "gramatica.y"
                                              {sslV->setId((yyvsp[0].STRING)); sslV->simulateRecovery();}
-#line 1780 "parser.cpp"
+#line 1781 "parser.cpp"
     break;
 
   case 30:
 #line 146 "gramatica.y"
             {}
-#line 1786 "parser.cpp"
+#line 1787 "parser.cpp"
     break;
 
   case 33:
 #line 155 "gramatica.y"
                                 {mkdiskV->setSize(atoi((yyvsp[0].NUM)));}
-#line 1792 "parser.cpp"
+#line 1793 "parser.cpp"
     break;
 
   case 34:
 #line 156 "gramatica.y"
                          {mkdiskV->setFit((yyvsp[0].STRING));}
-#line 1798 "parser.cpp"
+#line 1799 "parser.cpp"
     break;
 
   case 35:
 #line 157 "gramatica.y"
                          {mkdiskV->setUnit((yyvsp[0].STRING));}
-#line 1804 "parser.cpp"
+#line 1805 "parser.cpp"
     break;
 
   case 36:
 #line 158 "gramatica.y"
                               {mkdiskV->setPath((yyvsp[0].STRING), false);}
-#line 1810 "parser.cpp"
+#line 1811 "parser.cpp"
     break;
 
   case 37:
 #line 159 "gramatica.y"
                                 {mkdiskV->setPath((yyvsp[0].STRING), true);}
-#line 1816 "parser.cpp"
+#line 1817 "parser.cpp"
     break;
 
   case 40:
 #line 168 "gramatica.y"
                               {rmdiskV->setPath((yyvsp[0].STRING), false);}
-#line 1822 "parser.cpp"
+#line 1823 "parser.cpp"
     break;
 
   case 41:
 #line 169 "gramatica.y"
                                 {rmdiskV->setPath((yyvsp[0].STRING), true);}
-#line 1828 "parser.cpp"
+#line 1829 "parser.cpp"
     break;
 
   case 44:
 #line 178 "gramatica.y"
                                 {fdiskV->setSize(atoi((yyvsp[0].NUM)));}
-#line 1834 "parser.cpp"
+#line 1835 "parser.cpp"
     break;
 
   case 45:
 #line 179 "gramatica.y"
                          {fdiskV->setUnit((yyvsp[0].STRING));}
-#line 1840 "parser.cpp"
+#line 1841 "parser.cpp"
     break;
 
   case 46:
 #line 180 "gramatica.y"
                             {fdiskV->setType((yyvsp[0].STRING));}
-#line 1846 "parser.cpp"
+#line 1847 "parser.cpp"
     break;
 
   case 47:
 #line 181 "gramatica.y"
                            {fdiskV->setType((yyvsp[0].STRING));}
-#line 1852 "parser.cpp"
+#line 1853 "parser.cpp"
     break;
 
   case 48:
 #line 182 "gramatica.y"
                          {fdiskV->setFit((yyvsp[0].STRING));}
-#line 1858 "parser.cpp"
+#line 1859 "parser.cpp"
     break;
 
   case 49:
 #line 183 "gramatica.y"
                                {fdiskV->setDelete((yyvsp[0].STRING));}
-#line 1864 "parser.cpp"
+#line 1865 "parser.cpp"
     break;
 
   case 50:
 #line 184 "gramatica.y"
                             {fdiskV->setName((yyvsp[0].STRING), false);}
-#line 1870 "parser.cpp"
+#line 1871 "parser.cpp"
     break;
 
   case 51:
 #line 185 "gramatica.y"
                                 {fdiskV->setName((yyvsp[0].STRING), true);}
-#line 1876 "parser.cpp"
+#line 1877 "parser.cpp"
     break;
 
   case 52:
 #line 186 "gramatica.y"
                                {fdiskV->setAdd(atoi((yyvsp[0].NUM)));}
-#line 1882 "parser.cpp"
+#line 1883 "parser.cpp"
     break;
 
   case 53:
 #line 187 "gramatica.y"
                               {fdiskV->setPath((yyvsp[0].STRING), false);}
-#line 1888 "parser.cpp"
+#line 1889 "parser.cpp"
     break;
 
   case 54:
 #line 188 "gramatica.y"
                                 {fdiskV->setPath((yyvsp[0].STRING), true);}
-#line 1894 "parser.cpp"
+#line 1895 "parser.cpp"
     break;
 
   case 57:
 #line 197 "gramatica.y"
                             {repV->setName((yyvsp[0].STRING));}
-#line 1900 "parser.cpp"
+#line 1901 "parser.cpp"
     break;
 
   case 58:
 #line 198 "gramatica.y"
                                 {repV->setPath((yyvsp[0].STRING), true);}
-#line 1906 "parser.cpp"
+#line 1907 "parser.cpp"
     break;
 
   case 59:
 #line 199 "gramatica.y"
                               {repV->setPath((yyvsp[0].STRING), false);}
-#line 1912 "parser.cpp"
+#line 1913 "parser.cpp"
     break;
 
   case 60:
 #line 200 "gramatica.y"
                             {repV->setId((yyvsp[0].STRING));}
-#line 1918 "parser.cpp"
+#line 1919 "parser.cpp"
     break;
 
   case 61:
 #line 201 "gramatica.y"
                                       {repV->setId((yyvsp[0].STRING));}
-#line 1924 "parser.cpp"
+#line 1925 "parser.cpp"
     break;
 
   case 62:
 #line 202 "gramatica.y"
-                                {repV->setRuta((yyvsp[0].STRING));}
-#line 1930 "parser.cpp"
+                                {repV->setRuta((yyvsp[0].STRING), false);}
+#line 1931 "parser.cpp"
     break;
 
-  case 65:
-#line 210 "gramatica.y"
-                            {mountV->setName((yyvsp[0].STRING), false);}
-#line 1936 "parser.cpp"
+  case 63:
+#line 203 "gramatica.y"
+                                  {repV->setRuta((yyvsp[0].STRING), true);}
+#line 1937 "parser.cpp"
     break;
 
   case 66:
-#line 211 "gramatica.y"
-                                {mountV->setName((yyvsp[0].STRING), true);}
-#line 1942 "parser.cpp"
+#line 212 "gramatica.y"
+                            {mountV->setName((yyvsp[0].STRING), false);}
+#line 1943 "parser.cpp"
     break;
 
   case 67:
-#line 212 "gramatica.y"
-                              {mountV->setPath((yyvsp[0].STRING), false);}
-#line 1948 "parser.cpp"
+#line 213 "gramatica.y"
+                                {mountV->setName((yyvsp[0].STRING), true);}
+#line 1949 "parser.cpp"
     break;
 
   case 68:
-#line 213 "gramatica.y"
-                                {mountV->setPath((yyvsp[0].STRING), true);}
-#line 1954 "parser.cpp"
+#line 214 "gramatica.y"
+                              {mountV->setPath((yyvsp[0].STRING), false);}
+#line 1955 "parser.cpp"
     break;
 
-  case 71:
-#line 222 "gramatica.y"
-                                      {mkfsV->setId((yyvsp[0].STRING));}
-#line 1960 "parser.cpp"
+  case 69:
+#line 215 "gramatica.y"
+                                {mountV->setPath((yyvsp[0].STRING), true);}
+#line 1961 "parser.cpp"
     break;
 
   case 72:
-#line 223 "gramatica.y"
-                            {mkfsV->setType((yyvsp[0].STRING));}
-#line 1966 "parser.cpp"
+#line 224 "gramatica.y"
+                                      {mkfsV->setId((yyvsp[0].STRING));}
+#line 1967 "parser.cpp"
     break;
 
   case 73:
-#line 224 "gramatica.y"
-                                 {mkfsV->setFs(atoi((yyvsp[-1].NUM))); }
-#line 1972 "parser.cpp"
+#line 225 "gramatica.y"
+                            {mkfsV->setType((yyvsp[0].STRING));}
+#line 1973 "parser.cpp"
     break;
 
-  case 76:
-#line 233 "gramatica.y"
-                                      {loginV->setId((yyvsp[0].STRING));}
-#line 1978 "parser.cpp"
+  case 74:
+#line 226 "gramatica.y"
+                                 {mkfsV->setFs(atoi((yyvsp[-1].NUM))); }
+#line 1979 "parser.cpp"
     break;
 
   case 77:
-#line 234 "gramatica.y"
-                           {loginV->setUsr((yyvsp[0].STRING), false);}
-#line 1984 "parser.cpp"
+#line 235 "gramatica.y"
+                                      {loginV->setId((yyvsp[0].STRING));}
+#line 1985 "parser.cpp"
     break;
 
   case 78:
-#line 235 "gramatica.y"
-                               {loginV->setUsr((yyvsp[0].STRING), true);}
-#line 1990 "parser.cpp"
+#line 236 "gramatica.y"
+                           {loginV->setUsr((yyvsp[0].STRING), false);}
+#line 1991 "parser.cpp"
     break;
 
   case 79:
-#line 236 "gramatica.y"
-                           {loginV->setPwd((yyvsp[0].STRING),"", false); }
-#line 1996 "parser.cpp"
+#line 237 "gramatica.y"
+                               {loginV->setUsr((yyvsp[0].STRING), true);}
+#line 1997 "parser.cpp"
     break;
 
   case 80:
-#line 237 "gramatica.y"
-                                  {loginV->setPwd((yyvsp[-1].NUM),(yyvsp[0].STRING), false); }
-#line 2002 "parser.cpp"
+#line 238 "gramatica.y"
+                           {loginV->setPwd((yyvsp[0].STRING),"", false); }
+#line 2003 "parser.cpp"
     break;
 
   case 81:
-#line 238 "gramatica.y"
-                               {loginV->setPwd((yyvsp[0].NUM),"", false); }
-#line 2008 "parser.cpp"
+#line 239 "gramatica.y"
+                                  {loginV->setPwd((yyvsp[-1].NUM),(yyvsp[0].STRING), false); }
+#line 2009 "parser.cpp"
     break;
 
   case 82:
-#line 239 "gramatica.y"
-                               {loginV->setPwd((yyvsp[0].STRING),"", true); }
-#line 2014 "parser.cpp"
+#line 240 "gramatica.y"
+                               {loginV->setPwd((yyvsp[0].NUM),"", false); }
+#line 2015 "parser.cpp"
     break;
 
-  case 85:
-#line 248 "gramatica.y"
-                {mkdirV->setP();}
-#line 2020 "parser.cpp"
+  case 83:
+#line 241 "gramatica.y"
+                               {loginV->setPwd((yyvsp[0].STRING),"", true); }
+#line 2021 "parser.cpp"
     break;
 
   case 86:
-#line 249 "gramatica.y"
-                              {mkdirV->setPath((yyvsp[0].STRING), false);}
-#line 2026 "parser.cpp"
+#line 250 "gramatica.y"
+                {mkdirV->setP();}
+#line 2027 "parser.cpp"
     break;
 
   case 87:
-#line 250 "gramatica.y"
-                                {mkdirV->setPath((yyvsp[0].STRING), true);}
-#line 2032 "parser.cpp"
+#line 251 "gramatica.y"
+                              {mkdirV->setPath((yyvsp[0].STRING), false);}
+#line 2033 "parser.cpp"
     break;
 
-  case 90:
-#line 259 "gramatica.y"
-                {mkfileV->setR();}
-#line 2038 "parser.cpp"
+  case 88:
+#line 252 "gramatica.y"
+                                {mkdirV->setPath((yyvsp[0].STRING), true);}
+#line 2039 "parser.cpp"
     break;
 
   case 91:
-#line 260 "gramatica.y"
-                              {mkfileV->setPath((yyvsp[0].STRING), false);}
-#line 2044 "parser.cpp"
+#line 261 "gramatica.y"
+                {mkfileV->setR();}
+#line 2045 "parser.cpp"
     break;
 
   case 92:
-#line 261 "gramatica.y"
-                                {mkfileV->setPath((yyvsp[0].STRING), true);}
-#line 2050 "parser.cpp"
+#line 262 "gramatica.y"
+                              {mkfileV->setPath((yyvsp[0].STRING), false);}
+#line 2051 "parser.cpp"
     break;
 
   case 93:
-#line 262 "gramatica.y"
-                                {mkfileV->setSize(atoi((yyvsp[0].NUM)));}
-#line 2056 "parser.cpp"
+#line 263 "gramatica.y"
+                                {mkfileV->setPath((yyvsp[0].STRING), true);}
+#line 2057 "parser.cpp"
     break;
 
   case 94:
-#line 263 "gramatica.y"
-                              {mkfileV->setCont((yyvsp[0].STRING), false);}
-#line 2062 "parser.cpp"
+#line 264 "gramatica.y"
+                                {mkfileV->setSize(atoi((yyvsp[0].NUM)));}
+#line 2063 "parser.cpp"
     break;
 
   case 95:
-#line 264 "gramatica.y"
+#line 265 "gramatica.y"
+                              {mkfileV->setCont((yyvsp[0].STRING), false);}
+#line 2069 "parser.cpp"
+    break;
+
+  case 96:
+#line 266 "gramatica.y"
                                 {mkfileV->setCont((yyvsp[0].STRING), true);}
-#line 2068 "parser.cpp"
+#line 2075 "parser.cpp"
     break;
 
 
-#line 2072 "parser.cpp"
+#line 2079 "parser.cpp"
 
       default: break;
     }
@@ -2306,7 +2313,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 266 "gramatica.y"
+#line 268 "gramatica.y"
 
 void yyerror(const char *s)
 {

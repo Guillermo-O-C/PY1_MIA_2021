@@ -133,7 +133,7 @@ INSTRUCCION:
     | rep {repV = new _REP();} REPP {repV->exe();/*Imprime los reportes*/}
     | exec guion path igual cadena {execV = new _EXEC(); execV->setPath($5, true); execV->exe();}
     | exec guion path igual ruta {execV = new _EXEC(); execV->setPath($5, false); execV->exe();}
-    | pause_ {cout << "\nLa ejecución del script se ha pausado, por favor presiona cualquier tecla para continuar."; cin.get();}
+    | pause_ {cout << "\nLa ejecución del script se ha pausado, por favor presiona cualquier tecla para continuar."<<endl; cin.get();}
     | mount {mountV = new _MOUNT();} MOUNTP {mountV->exe();/*realiza la eliminación del disco*/}
     | unmount guion R_id igual partition_id {mountV->unmount($5); }
     | mkfs {mkfsV = new _MKFS();} MKFSP {mkfsV->exe();}
@@ -199,8 +199,10 @@ REPPARAM:
     |   guion path igual ruta {repV->setPath($4, false);}
     |   guion R_id igual id {repV->setId($4);}
     |   guion R_id igual partition_id {repV->setId($4);}
-    |   guion R_ruta igual ruta {repV->setRuta($4);}
+    |   guion R_ruta igual ruta {repV->setRuta($4, false);}
+    |   guion R_ruta igual cadena {repV->setRuta($4, true);}
 ;
+
 MOUNTP:
     MOUNTP MOUNTPARAM
     | MOUNTPARAM

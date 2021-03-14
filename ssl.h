@@ -110,7 +110,11 @@ int diskSpot = (int)this->id[3]-65;
                 if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
                     if(charToString(discosMontados[diskSpot].particiones[partSpot].name, 16)==charToString(opciones[i].part_name, 16)){//se encontró la partición
                         fseek(search, opciones[i].part_start, SEEK_SET);
-                        fread(&superBloque, sizeof(SB), 1, search);  
+                        fread(&superBloque, sizeof(SB), 1, search); 
+                        if(superBloque.s_filesystem_type!=3){
+                            cout <<"ERROR: No se puede usar el comando Recovery sobre un sistema de archivos EXT2"<<endl;
+                            return;
+                        } 
                         superBloque.s_first_ino=2;//0 es de raiz y 1 es de users.txt
                         superBloque.s_first_blo=2;//0 es bloque de carpeta de raiz y 1 es de contenido para users.txt 
                         superBloque.s_free_blocks_count=superBloque.s_blocks_count-2;
@@ -169,12 +173,13 @@ int diskSpot = (int)this->id[3]-65;
                         fwrite("2", 1, 1, search);
                         fflush(search);
                         Journaling temp;
+                        int puntoDeRetorno=temp.nextAvailable(search, opciones[i].part_start);
                         for(int e =2;e<superBloque.s_inodes_count;e++){
                             fseek(search, opciones[i].part_start+sizeof(SB)+e*sizeof(Journaling), SEEK_SET);
                             fread(&temp, sizeof(Journaling), 1, search);
                             if(temp.tipo!='1' && temp.tipo!='2'){//termina el journal
                                 cout << "La recuperación del sistema ha terminado."<<endl;
-                                return;
+                                break;
                             }
                             if(charToString(temp.tipo_operacion, 10)=="mkdir" && temp.tipo=='1'){
                                 _MKDIR mkdir;
@@ -192,7 +197,12 @@ int diskSpot = (int)this->id[3]-65;
                                 mkfile.setPath(charToString(temp.path,60), false);
                                 mkfile.exe();
                             }
-                        }       
+                        } 
+                        for(int e =puntoDeRetorno;e<superBloque.s_inodes_count;e++){
+                            fseek(search, opciones[i].part_start+sizeof(SB)+e*sizeof(Journaling), SEEK_SET);
+                            fwrite("00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000", sizeof(Journaling), 1, search);
+                            fflush(search);
+                        }    
                     } 
                 }        
             }

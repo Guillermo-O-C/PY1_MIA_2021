@@ -6,6 +6,7 @@ using namespace std;
 #include "mbr.h"
 #include "mountStructs.h"
 #include "partitionStructs.h"
+#include "mkfile.h"
 
 class _REP{
     private:
@@ -25,7 +26,7 @@ class _REP{
     void setPath(string path, bool isCadena);
     void setName(string name);
     void setId(string id);
-    void setRuta(string ruta);
+    void setRuta(string ruta, bool isCadena);
     void exe();
     void graphMbr();
     void graphDisk();
@@ -46,6 +47,9 @@ class _REP{
     string folderToString(char * name);
     string nToString(char * name, int n);
     string toHex(int hex);
+    string recorrerInodo(FILE* search, SB superbloque, inode inodo);
+    string listarInodos(FILE* search, SB superbloque, inode inodo, string content, string folderName);
+    string traducirPermisos(int perm);
 };
 
 void _REP::setPath(string path, bool isCadena){
@@ -73,8 +77,12 @@ void _REP::setId(string id){
     this->diskSpot=diskSpot;
     this->partSpot=partSpot;
 };
-void _REP::setRuta(string ruta){
-    this->ruta=ruta;
+void _REP::setRuta(string ruta, bool isCadena){
+    if(isCadena){
+        this->ruta = ruta.substr(1, ruta.length()-2);
+    }else{
+        this->ruta = ruta;
+    }
 };
 void _REP::exe(){
     if(discosMontados[this->diskSpot].status==1){//el disco funciona
@@ -989,6 +997,58 @@ void _REP::graphFile(){
     for(int i =0;i<4;i++){
         if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
             if(name==nameToString(opciones[i].part_name)){
+                SB superbloque;
+                fseek(search, opciones[i].part_start, SEEK_SET);
+                fread(&superbloque, sizeof(SB), 1, search);
+                _MKFILE buscador;
+                int inodeLocation =0;
+                this->ruta = (this->ruta[0] == '/') ? this->ruta.substr(1, this->ruta.length()) : this->ruta;
+                vector<string> carpetas = buscador.split(this->ruta, "/");
+                for (int e = 0; e < carpetas.size(); e++)
+                { //ciclo para iterar entre las carpetas de la ruta
+                    if (e == carpetas.size() - 1)
+                    { //el último elelmento es el archivo a crear
+                        SB superBloque;
+                        fseek(search, opciones[i].part_start, SEEK_SET);
+                        fread(&superBloque, sizeof(SB), 1, search);
+                        inode carpetaTemporal;
+                        fseek(search, superBloque.s_inode_start + sizeof(inode) * inodeLocation, SEEK_SET);
+                        fread(&carpetaTemporal, sizeof(inode), 1, search);
+                        string folderName = carpetas[e];
+                        inodeLocation = buscador.searchFile(search, superBloque, carpetaTemporal, folderName);
+                        if (inodeLocation != 0)
+                        {
+                            fseek(search, superBloque.s_inode_start + sizeof(inode) * inodeLocation, SEEK_SET);
+                            fread(&carpetaTemporal, sizeof(inode), 1, search);
+                            string fileContent = recorrerInodo(search, superBloque, carpetaTemporal);
+                            string graph = "digraph G {\n node [ shape=box fontname=Helvetica ] sb [label = <<table><tr><td>"+folderName+"</td></tr>";
+                            graph=graph+"<tr><td>"+fileContent+"</td></tr></table>>];}";
+                            Print(graph, "File");
+                            return;
+                        }
+                        else
+                        {
+                            cout << "ERROR: No se ha encontrado el archivo "<<folderName<<endl;
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        SB superBloque;
+                        fseek(search, opciones[i].part_start, SEEK_SET);
+                        fread(&superBloque, sizeof(SB), 1, search);
+                        inode carpetaTemporal;
+                        fseek(search, superBloque.s_inode_start + sizeof(inode) * inodeLocation, SEEK_SET);
+                        fread(&carpetaTemporal, sizeof(inode), 1, search);
+                        string folderName = carpetas[e];
+                        inodeLocation = buscador.searchForFolder(search, superBloque, carpetaTemporal, folderName);
+                        if (inodeLocation == 0)
+                        {
+                            cout << "ERROR: No se ha encontrado el archivo en la ruta "<<this->ruta<<endl;
+                        }
+                    }
+                }
+
             }
         }
     }
@@ -1003,6 +1063,16 @@ void _REP::graphLs(){
     for(int i =0;i<4;i++){
         if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
             if(name==nameToString(opciones[i].part_name)){
+                SB superbloque;
+                fseek(search, opciones[i].part_start, SEEK_SET);
+                fread(&superbloque, sizeof(SB), 1, search);
+                string graph = "digraph G {\n node [ shape=box fontname=Helvetica ] sb [label = <<table>\n";
+                graph = graph + "<tr><td>Permisos</td><td>Dueño</td><td>Grupo</td><td>Size</td><td>Fecha</td><td>Hora</td><td>Tipo</td><td>Name</td></tr>\n";
+                inode raiz;
+                fseek(search, superbloque.s_inode_start, SEEK_SET);
+                fread(&raiz, sizeof(inode), 1, search);
+                graph = listarInodos(search, superbloque, raiz, graph, "/");
+                Print(graph+"</table>>];\n}", "LS");
             }
         }
     }
@@ -1127,4 +1197,253 @@ string _REP::toHex(int hex){
     ss << std::hex << hex;
     const std::string s = ss.str();
     return toUpperCase(s);
+}
+
+string _REP::recorrerInodo(FILE* search, SB superbloque, inode inodo){
+    string fileContent="";
+    if(inodo.i_type=='1'){
+        if(inodo.i_size!=0){
+            //existe un archivo
+            int sizePrinted=0;
+            for(int i =0;i<12;i++){
+                file_block file;
+                fseek(search, superbloque.s_block_start+inodo.i_block[i]*64, SEEK_SET);
+                fread(&file, 64, 1, search);
+                if(inodo.i_size-sizePrinted>64){
+                    //imprime los 64 bytes del bloque
+                    for(int e =0;e<64;e++){
+                        if(file.b_content[e]=='\n'){
+                            fileContent=fileContent+"<br/>";
+                        }else{
+                            fileContent=fileContent+file.b_content[e];
+
+                        }
+                        sizePrinted++;
+                    }
+                }else{
+                    for(int e =0;e<inodo.i_size-sizePrinted;e++){
+                        if(file.b_content[e]=='\n'){
+                            fileContent=fileContent+"<br/>";
+                            continue;
+                        }
+                        fileContent=fileContent+file.b_content[e];
+                    }
+                    sizePrinted=inodo.i_size;
+                }
+                if(sizePrinted==inodo.i_size)break;
+            } 
+            if(sizePrinted==inodo.i_size)return fileContent;
+            //API1
+            if(inodo.i_block[12]==-1)return fileContent;
+            pointers API1;
+            fseek(search, superbloque.s_block_start+inodo.i_block[12]*64, SEEK_SET);
+            fread(&API1, 64, 1, search);
+            for(int i =0;i<16;i++){
+                if(sizePrinted==inodo.i_size || API1.b_pointers[i]==-1)break;//si apunta a -1 igual se arruinaría el grafo así que mejor break
+                file_block file;
+                fseek(search, superbloque.s_block_start+ API1.b_pointers[i]*64, SEEK_SET);
+                fread(&file, 64, 1, search);
+                if(inodo.i_size-sizePrinted>64){
+                    //imprime los 64 bytes del bloque
+                    for(int e =0;e<64;e++){
+                        if(file.b_content[e]=='\0')break;
+                        if(file.b_content[e]=='\n'){
+                            fileContent=fileContent+"<br/>";
+                        }else{
+                            fileContent=fileContent+file.b_content[e];
+                        }
+                        sizePrinted++;
+                    }
+                }else{
+                    for(int e =0;e<inodo.i_size-sizePrinted;e++){
+                        if(file.b_content[e]=='\n'){
+                            fileContent=fileContent+"<br/>";
+                            continue;
+                        }
+                        fileContent=fileContent+file.b_content[e];
+                    }
+                    sizePrinted=inodo.i_size;
+                }
+            }
+            //API2
+            if(inodo.i_block[13]==-1)return fileContent;
+            pointers API2;
+            fseek(search, superbloque.s_block_start+inodo.i_block[13]*64, SEEK_SET);
+            fread(&API2, 64, 1, search);
+            for(int e =0;e<16;e++){
+                if(API2.b_pointers[e]!=-1){
+                    pointers API1;
+                    fseek(search, superbloque.s_block_start+API2.b_pointers[e]*64, SEEK_SET);
+                    fread(&API1, 64, 1, search);
+                    for(int i =0;i<16;i++){
+                        if(sizePrinted==inodo.i_size || API1.b_pointers[i]==-1)break;//si apunta a -1 igual se arruinaría el grafo así que mejor break
+                        file_block file;
+                        fseek(search, superbloque.s_block_start+ API1.b_pointers[i]*64, SEEK_SET);
+                        fread(&file, 64, 1, search);
+                        if(inodo.i_size-sizePrinted>64){
+                            //imprime los 64 bytes del bloque
+                            for(int e =0;e<64;e++){
+                                if(file.b_content[e]=='\0')break;
+                                if(file.b_content[e]=='\n'){
+                                    fileContent=fileContent+"<br/>";
+                                }else{
+                                    fileContent=fileContent+file.b_content[e];
+
+                                }
+                                sizePrinted++;
+                            }
+                        }else{
+                            for(int e =0;e<inodo.i_size-sizePrinted;e++){
+                                if(file.b_content[e]=='\n'){
+                                    fileContent=fileContent+"<br/>";
+                                    continue;
+                                }
+                                fileContent=fileContent+file.b_content[e];
+                            }
+                            sizePrinted=inodo.i_size;
+                        }
+                        if(sizePrinted==inodo.i_size)break;
+                    }
+                }
+            }
+            //API3
+            if(inodo.i_block[14]==-1)return fileContent;
+            pointers API3;
+            fseek(search, superbloque.s_block_start+inodo.i_block[14]*64, SEEK_SET);
+            fread(&API3, 64, 1, search);
+            for(int o=0;o<16;o++){
+                if(API3.b_pointers[o]!=-1){
+                    pointers API2;
+                    fseek(search, superbloque.s_block_start+API3.b_pointers[o]*64, SEEK_SET);
+                    fread(&API2, 64, 1, search);
+                    for(int e =0;e<16;e++){
+                        if(API2.b_pointers[e]!=-1){
+                            pointers API1;
+                            fseek(search, superbloque.s_block_start+API2.b_pointers[e]*64, SEEK_SET);
+                            fread(&API1, 64, 1, search);
+                            for(int i =0;i<16;i++){
+                                if(sizePrinted==inodo.i_size || API1.b_pointers[i]==-1)break;//si apunta a -1 igual se arruinaría el grafo así que mejor break
+                                file_block file;
+                                fseek(search, superbloque.s_block_start+ API1.b_pointers[i]*64, SEEK_SET);
+                                fread(&file, 64, 1, search);
+                                if(inodo.i_size-sizePrinted>64){
+                                    //imprime los 64 bytes del bloque
+                                    for(int e =0;e<64;e++){
+                                        if(file.b_content[e]=='\0')break;
+                                        if(file.b_content[e]=='\n'){
+                                            fileContent=fileContent+"<br/>";
+                                        }else{
+                                            fileContent=fileContent+file.b_content[e];
+
+                                        }
+                                        sizePrinted++;
+                                    }
+                                }else{
+                                    for(int e =0;e<inodo.i_size-sizePrinted;e++){
+                                        if(file.b_content[e]=='\n'){
+                                            fileContent=fileContent+"<br/>";
+                                            continue;
+                                        }
+                                        fileContent=fileContent+file.b_content[e];
+                                    }
+                                    sizePrinted=inodo.i_size;
+                                }
+                                if(sizePrinted==inodo.i_size)break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return fileContent;
+}
+
+string _REP::listarInodos(FILE* search, SB superbloque, inode inodo, string content, string folderName){
+    string fecha = "";
+    string hora = "";
+    for(int e=0;e<10;e++){
+        fecha=fecha+inodo.i_atime[e];
+        if(e<5){
+            hora = inodo.i_atime[15-e]+hora;
+        }
+    }
+    if(inodo.i_type=='0'){
+        content=content+"<tr><td>"+traducirPermisos(inodo.i_perm)+"</td><td>root</td><td>root</td><td>"+to_string(inodo.i_size)+"</td><td>"+fecha+"</td><td>"+hora+"</td><td>Carpeta</td><td>"+folderName+"</td></tr>\n";
+        for(int i =0;i<12;i++){
+            if(inodo.i_block[i]!=-1){
+                folder_block folder;
+                fseek(search, superbloque.s_block_start+inodo.i_block[i]*64, SEEK_SET);
+                fread(&folder, 64, 1, search);
+                for(int e =0;e<4;e++){
+                    if(folder.b_content[e].b_inodo!=-1){
+                        if(i==0 && e==0 || i==0 && e==1)continue;//para que no se encicle con el padre y abuelo
+                        fseek(search, superbloque.s_inode_start+folder.b_content[e].b_inodo*sizeof(inode),SEEK_SET);
+                        inode next;
+                        fread(&next, sizeof(inode), 1, search);
+                        content = listarInodos(search, superbloque, next, content, folder.b_content[e].b_name);
+                    }                    
+                }      
+            }
+        }
+        //API1
+        if(inodo.i_block[12]!=-1){//API1 en uso
+            pointers apuntadores;
+            fseek(search, 64*inodo.i_block[12]+superbloque.s_block_start, SEEK_SET);
+            for(int i=0;i<16;i++){
+                if(apuntadores.b_pointers[i]!=-1){//dirigen a un bloque de tipo carpeta
+                    folder_block folder;
+                    fseek(search, superbloque.s_block_start+apuntadores.b_pointers[i]*64, SEEK_SET);
+                     for(int e =0;e<4;e++){
+                        if(folder.b_content[e].b_inodo!=-1){
+                            fseek(search, superbloque.s_inode_start+folder.b_content[e].b_inodo*sizeof(inode),SEEK_SET);
+                            inode next;
+                            fread(&next, sizeof(inode), 1, search);
+                            content = listarInodos(search, superbloque, next, content, folder.b_content[e].b_name);
+                        }                    
+                    } 
+                }                    
+            }    
+        }
+    }
+    else{
+        content=content+"<tr><td>"+traducirPermisos(inodo.i_perm)+"</td><td>root</td><td>root</td><td>"+to_string(inodo.i_size)+"</td><td>"+fecha+"</td><td>"+hora+"</td><td>Archivo</td><td>"+folderName+"</td></tr>\n";
+    }
+    return content;
+}
+
+string _REP::traducirPermisos(int perm){
+    std::ostringstream os;
+    os << perm;
+    std::string digits = os.str();
+    string translation;
+    for(int i =0;i<3;i++){
+        switch(digits[i]-'0'){
+            case 0:
+                translation = translation+"---";
+                break;
+            case 1:
+                translation = translation+"--x";
+                break;
+            case 2:
+                translation = translation+"-w-";
+                break;
+            case 3:
+                translation = translation+"r--";
+                break;
+            case 4:
+                translation = translation+"r-x";
+                break;
+            case 5:
+                translation = translation+"r-x";
+                break;
+            case 6:
+                translation = translation+"rw-";
+                break;
+            case 7:
+                translation = translation+"rwx";
+                break;
+        }
+    }
+    return translation;
 }
