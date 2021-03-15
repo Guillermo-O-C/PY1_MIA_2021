@@ -196,7 +196,6 @@ void _COMMANDS::exeChmod(){
                 int inodeLocation =0;
                 this->path = (this->path[0] == '/') ? this->path.substr(1, this->path.length()) : this->path;
                 vector<string> carpetas = buscador.split(this->path, "/");
-                cout << this->path<<" n="<<carpetas.size()<<endl;
                 for (int e = 0; e < carpetas.size(); e++)
                 { //ciclo para iterar entre las carpetas del path
                     SB superBloque;
@@ -210,43 +209,31 @@ void _COMMANDS::exeChmod(){
                     if (inodeLocation != 0)
                     {
                         if (e == carpetas.size() - 1)
-                        { //es la carpeta que hay que crear
-                            if(this->r){
-                                fseek(search, superBloque.s_inode_start + sizeof(inode) * inodeLocation, SEEK_SET);
-                                fread(&carpetaTemporal, sizeof(inode), 1, search);
-                                cambiarPermisos(search,  superBloque, carpetaTemporal, inodeLocation);
-                            }else{
-                                fseek(search, superBloque.s_inode_start + sizeof(inode) * inodeLocation, SEEK_SET);
-                                fread(&carpetaTemporal, sizeof(inode), 1, search);
-                                carpetaTemporal.i_perm=this->ugo;
-                                fseek(search, superBloque.s_inode_start+sizeof(inode)*inodeLocation, SEEK_SET);
-                                fwrite(&carpetaTemporal, sizeof(inode), 1, search);
-                                fflush(search);
-                            }
-                            addToJournal(search, opciones[i].part_start, superBloque, carpetaTemporal, 5);
-                            cout << "Se han cambiado los permisos exitosamente."<<endl;
-                            return;
+                        {
+                            break;
                         }
-                      /*  abuelo = padre;
-                        padre = inodeLocation;*/
                     }
                     else
                     {
-                      /*  if (e == carpetas.size() - 1 || this->p)
-                        { //es la carpeta que hay que crear || se crea la carpeta
-                            abuelo = padre;
-                            padre = superBloque.s_first_ino;
-                            createFolder(search, opciones[i].part_start, superBloque, carpetaTemporal, folderName, abuelo, padre);
-                            inodeLocation = superBloque.s_first_ino;
-                            if(e == carpetas.size()-1 && superBloque.s_filesystem_type==3) addToJournal(search, opciones[i].part_start, superBloque, carpetaTemporal);
-                        }
-                        else
-                        {*/
-                            cout << "ERROR: No existe la carpeta " + folderName << endl;
-                            return;
-                       // }
+                      cout << "ERROR: No existe la carpeta " + folderName << endl;
+                      return;
                     }
                 }
+                inode carpetaTemporal;
+                if(this->r){
+                    fseek(search, superBloque.s_inode_start + sizeof(inode) * inodeLocation, SEEK_SET);
+                    fread(&carpetaTemporal, sizeof(inode), 1, search);
+                    cambiarPermisos(search,  superBloque, carpetaTemporal, inodeLocation);
+                }else{
+                    fseek(search, superBloque.s_inode_start + sizeof(inode) * inodeLocation, SEEK_SET);
+                    fread(&carpetaTemporal, sizeof(inode), 1, search);
+                    carpetaTemporal.i_perm=this->ugo;
+                    fseek(search, superBloque.s_inode_start+sizeof(inode)*inodeLocation, SEEK_SET);
+                    fwrite(&carpetaTemporal, sizeof(inode), 1, search);
+                    fflush(search);
+                }
+                addToJournal(search, opciones[i].part_start, superBloque, carpetaTemporal, 5);
+                cout << "Se han cambiado los permisos exitosamente."<<endl;
                 return;
             }
         }

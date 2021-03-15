@@ -7,6 +7,7 @@ using namespace std;
 #include "mountStructs.h"
 #include "partitionStructs.h"
 #include "mkfile.h"
+#include "commands.h"
 
 class _REP{
     private:
@@ -1055,6 +1056,10 @@ void _REP::graphFile(){
 };
 
 void _REP::graphLs(){
+    if(this->ruta==""){
+        cout << "El parámetro ruta es obligatorio para el reporte LS"<<endl;
+        return;
+    }
     FILE *search =  fopen(this->diskPath.c_str(), "rb+");
     MBR mbr;
     fread(&mbr, sizeof(MBR), 1, search);
@@ -1063,15 +1068,48 @@ void _REP::graphLs(){
     for(int i =0;i<4;i++){
         if(opciones[i].part_status=='1' && opciones[i].part_type=='p'){
             if(name==nameToString(opciones[i].part_name)){
-                SB superbloque;
+                SB superBloque;
                 fseek(search, opciones[i].part_start, SEEK_SET);
-                fread(&superbloque, sizeof(SB), 1, search);
+                fread(&superBloque, sizeof(SB), 1, search);
+                _MKFILE buscador;
+                int inodeLocation =0;
+                this->ruta = (this->ruta[0] == '/') ? this->ruta.substr(1, this->ruta.length()) : this->ruta;
+                vector<string> carpetas = buscador.split(this->ruta, "/");
+                string folderName="/";
+                if(this->ruta!=""){
+                    for (int e = 0; e < carpetas.size(); e++)
+                    { //ciclo para iterar entre las carpetas del path
+                        SB superBloque;
+                        fseek(search, opciones[i].part_start, SEEK_SET);
+                        fread(&superBloque, sizeof(SB), 1, search);
+                        inode carpetaTemporal;
+                        fseek(search, superBloque.s_inode_start + sizeof(inode) * inodeLocation, SEEK_SET);
+                        fread(&carpetaTemporal, sizeof(inode), 1, search);
+                        folderName = carpetas[e];
+                        _COMMANDS command;
+                        inodeLocation = command.searchForFolder(search, superBloque, carpetaTemporal, folderName);
+                        if (inodeLocation != 0)
+                        {
+                            if (e == carpetas.size() - 1)
+                            {
+                                break;
+                            }
+                        }
+                        else
+                        {
+                        cout << "ERROR: No existe la carpeta " + folderName << endl;
+                        return;
+                        }
+                    }
+                }                
+                fseek(search, opciones[i].part_start, SEEK_SET);
+                fread(&superBloque, sizeof(SB), 1, search);
                 string graph = "digraph G {\n node [ shape=box fontname=Helvetica ] sb [label = <<table>\n";
                 graph = graph + "<tr><td>Permisos</td><td>Dueño</td><td>Grupo</td><td>Size</td><td>Fecha</td><td>Hora</td><td>Tipo</td><td>Name</td></tr>\n";
                 inode raiz;
-                fseek(search, superbloque.s_inode_start, SEEK_SET);
+                fseek(search, superBloque.s_inode_start+sizeof(inode)*inodeLocation, SEEK_SET);
                 fread(&raiz, sizeof(inode), 1, search);
-                graph = listarInodos(search, superbloque, raiz, graph, "/");
+                graph = listarInodos(search, superBloque, raiz, graph, folderName);
                 Print(graph+"</table>>];\n}", "LS");
             }
         }
@@ -1360,6 +1398,7 @@ string _REP::recorrerInodo(FILE* search, SB superbloque, inode inodo){
 }
 
 string _REP::listarInodos(FILE* search, SB superbloque, inode inodo, string content, string folderName){
+    cout << folderName<<endl;
     string fecha = "";
     string hora = "";
     for(int e=0;e<10;e++){
