@@ -1398,7 +1398,6 @@ string _REP::recorrerInodo(FILE* search, SB superbloque, inode inodo){
 }
 
 string _REP::listarInodos(FILE* search, SB superbloque, inode inodo, string content, string folderName){
-    cout << folderName<<endl;
     string fecha = "";
     string hora = "";
     for(int e=0;e<10;e++){

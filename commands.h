@@ -642,7 +642,6 @@ int _COMMANDS::searchForFolder(FILE *search, SB superBloque, inode carpetaTempor
             { //iterando sobre los nombres del bloque de carpetas
                 if (folder.b_content[o].b_inodo != -1)
                 {
-                    cout << folder.b_content[o].b_name<<" ? "<<folderName<<endl;
                     if (charToString(folder.b_content[o].b_name, 12) == folderName)
                     {
                         fseek(search, superBloque.s_inode_start + sizeof(inode) * folder.b_content[o].b_inodo, SEEK_SET);
