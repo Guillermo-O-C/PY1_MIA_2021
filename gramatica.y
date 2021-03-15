@@ -156,6 +156,7 @@ INSTRUCCION:
     | loss guion R_id igual partition_id {sslV = new _SSL(); sslV->setId($5); sslV->simulateLoss();}
     | recovery guion R_id igual partition_id {sslV->setId($5); sslV->simulateRecovery();}
     | mv {commandsV = new _COMMANDS();} COMMANDP {commandsV->exeMv();}
+    | chmod {commandsV = new _COMMANDS();} COMMANDP {commandsV->exeChmod();}
     | error {} 
 ;
 
@@ -301,6 +302,8 @@ COMMANDPARAM :
     |   guion path igual cadena {commandsV->setPath($4, true);}
     |   guion dest igual ruta {commandsV->setDest($4, false);}
     |   guion dest igual cadena {commandsV->setDest($4, true);}
+    |   guion ugo igual numero {commandsV->setUgo(atoi($4));}
+    |   guion r {commandsV->setR();}
 ;
 %%
 void yyerror(const char *s)

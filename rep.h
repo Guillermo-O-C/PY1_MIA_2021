@@ -1096,7 +1096,7 @@ void _REP::graphJournaling(){
                 for(int e =0;e<superBloque.s_inodes_count;e++){
                     fseek(search, opciones[i].part_start+sizeof(SB)+e*sizeof(Journaling), SEEK_SET);
                     fread(&temp, sizeof(Journaling), 1, search);
-                    if(temp.tipo!='1' && temp.tipo!='2' && temp.tipo!='3' && temp.tipo!='4'){//sin usar
+                    if(temp.tipo!='1' && temp.tipo!='2' && temp.tipo!='3' && temp.tipo!='4' && temp.tipo!='5'){//sin usar
                         break;
                     }
                     if(e!=0)arrow=arrow+"->";
